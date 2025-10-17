@@ -57,7 +57,7 @@ if uploaded_file is not None:
     elif menu == "Klasifikasi Gambar":
         classifier = load_classifier_model()
         with st.spinner("🧩 Sedang melakukan klasifikasi..."):
-            img_resized = img.resize((224, 224))
+            img_resized = img.resize((128, 128))
             img_array = tf.keras.preprocessing.image.img_to_array(img_resized)
             img_array = np.expand_dims(img_array, axis=0) / 255.0
 
