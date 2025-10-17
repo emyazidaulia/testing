@@ -1,13 +1,6 @@
---extra-index-url https://pypi.org/simple
---prefer-binary
-
-streamlit==1.38.0
-tensorflow-cpu==2.15.0
-torch==2.2.2
-torchvision==0.17.2
-ultralytics==8.2.55
-opencv-python-headless==4.8.1.78
-numpy==1.26.4
-Pillow==10.4.0
-requests==2.32.3
-protobuf==4.25.3
+streamlit
+tensorflow
+ultralytics
+Pillow
+opencv-python-headless
+numpy
