@@ -38,12 +38,19 @@ def goto(page):
     st.session_state.page = page
     st.experimental_rerun()
 
+# Hilangkan margin/padding bawaan
+st.markdown("""
+    <style>
+    .block-container {padding:0; margin:0;}
+    header, footer {visibility:hidden;}
+    .full-container {height:100vh; width:100vw;}
+    </style>
+    """, unsafe_allow_html=True)
+
 # ====== HOME PAGE ======
 if st.session_state.page == "home":
     st.markdown("""
         <style>
-        .block-container {padding:0; margin:0;}
-        header, footer {visibility:hidden;}
         .full-container {
             display:grid;
             grid-template-columns:1fr 1fr;
@@ -56,14 +63,15 @@ if st.session_state.page == "home":
             display:flex;
             justify-content:center;
             align-items:center;
-            font-size:2rem;
+            font-size:2.2rem;
             font-weight:700;
             color:white;
             text-align:center;
             cursor:pointer;
             transition:all 0.25s ease;
+            user-select: none;
         }
-        .side:hover {transform:scale(1.03);}
+        .side:hover {transform:scale(1.03); filter:brightness(1.03);}
         .red {background:linear-gradient(135deg,#ff2b2b,#ff6b6b);}
         .blue {background:linear-gradient(135deg,#007bff,#00bfff);}
         </style>
@@ -78,27 +86,29 @@ if st.session_state.page == "home":
         </div>
 
         <script>
-        // kirim sinyal klik ke Streamlit via Streamlit.setComponentValue()
-        const red = window.parent.document.querySelector('iframe');
-        window.onload = () => {
-            document.getElementById("redSide").onclick = () => {
-                window.parent.postMessage({streamlitMessage: "goto_classify"}, "*");
-            };
-            document.getElementById("blueSide").onclick = () => {
-                window.parent.postMessage({streamlitMessage: "goto_detect"}, "*");
-            };
+        // Kirim pesan postMessage ke parent
+        document.getElementById("redSide").onclick = () => {
+            window.parent.postMessage({streamlitMessage: "goto_classify"}, "*");
         };
+        document.getElementById("blueSide").onclick = () => {
+            window.parent.postMessage({streamlitMessage: "goto_detect"}, "*");
+        };
+
+        // Saat menerima message dari parent streamlit (opsional)
+        window.addEventListener("message", (event) => {
+            // no-op, placeholder if needed
+        });
         </script>
     """, unsafe_allow_html=True)
 
-    # Tangkap event dari JS melalui custom channel Streamlit
-    msg = st.experimental_get_query_params().get("msg", [None])[0]
+    # === GANTI: gunakan st.query_params (bukan experimental) ===
+    msg = st.query_params.get("msg", [None])[0]
     if msg == "goto_classify":
         goto("classify")
     elif msg == "goto_detect":
         goto("detect")
 
-    # Listener agar JS bisa ubah query param tanpa reload
+    # Listener JS untuk menulis query param dan memicu Streamlit menangkapnya
     st.markdown("""
         <script>
         window.addEventListener("message", (event) => {
@@ -106,6 +116,7 @@ if st.session_state.page == "home":
             if (data === "goto_classify" || data === "goto_detect") {
                 const newUrl = new URL(window.location);
                 newUrl.searchParams.set("msg", data);
+                // ubah location sehingga Streamlit membaca st.query_params tanpa kehilangan session_state
                 window.location.href = newUrl;
             }
         });
@@ -142,13 +153,15 @@ elif st.session_state.page == "detect":
 
     if not YOLO_AVAILABLE:
         st.error(f"YOLO tidak tersedia: {YOLO_IMPORT_ERROR}")
-    else:
-        uploaded_file = st.file_uploader("Unggah gambar", type=["jpg","jpeg","png"])
-        if uploaded_file:
-            img = Image.open(uploaded_file).convert("RGB")
-            st.image(img, caption="Gambar diunggah", use_column_width=True)
-            yolo = load_yolo_model()
+    uploaded_file = st.file_uploader("Unggah gambar", type=["jpg","jpeg","png"])
+    if uploaded_file:
+        img = Image.open(uploaded_file).convert("RGB")
+        st.image(img, caption="Gambar diunggah", use_column_width=True)
+        yolo = load_yolo_model()
+        if yolo:
             with st.spinner("Mendeteksi..."):
                 results = yolo.predict(img, verbose=False)
                 result_img = results[0].plot()
             st.image(result_img, caption="Hasil Deteksi", use_column_width=True)
+        else:
+            st.error("Model YOLO tidak dapat dijalankan di environment ini.")
