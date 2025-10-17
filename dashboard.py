@@ -55,52 +55,45 @@ if st.session_state.page == "home":
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 2.3rem;
-            font-weight: 700;
-            color: white;
+            position: relative;
             text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            user-select: none;
         }
         .left { background: linear-gradient(135deg, #ff2b2b, #ff6b6b); }
         .right { background: linear-gradient(135deg, #007bff, #00bfff); }
-        .left:hover, .right:hover { transform: scale(1.03); filter: brightness(1.05); }
+
+        .center-box {
+            padding: 40px 60px;
+            border-radius: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 700;
+            font-size: 2rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            backdrop-filter: blur(5px);
+        }
+        .center-box:hover {
+            transform: scale(1.05);
+            background-color: rgba(255,255,255,0.3);
+        }
         </style>
 
         <div class="split-screen">
-            <div class="left" id="leftBox">🍝 Eat uncooked pasta<br>(Image Classification)</div>
-            <div class="right" id="rightBox">🥤 Drink salted coke<br>(Object Detection)</div>
+            <div class="left">
+                <div class="center-box" onclick="window.location.href='?page=classify'">
+                    🍝 Eat uncooked pasta<br>(Image Classification)
+                </div>
+            </div>
+            <div class="right">
+                <div class="center-box" onclick="window.location.href='?page=detect'">
+                    🥤 Drink salted coke<br>(Object Detection)
+                </div>
+            </div>
         </div>
-
-        <script>
-        const streamlitEvents = window.parent.postMessage;
-        document.getElementById("leftBox").addEventListener("click", () => {
-            streamlitEvents({ isStreamlitMessage: true, type: "goto_classify" }, "*");
-        });
-        document.getElementById("rightBox").addEventListener("click", () => {
-            streamlitEvents({ isStreamlitMessage: true, type: "goto_detect" }, "*");
-        });
-        </script>
     """, unsafe_allow_html=True)
 
-    # Tangani klik dari JavaScript
-    st.markdown(
-        """
-        <script>
-        window.addEventListener("message", (event) => {
-            if (event.data.type === "goto_classify") {
-                window.location.href = "?page=classify";
-            }
-            if (event.data.type === "goto_detect") {
-                window.location.href = "?page=detect";
-            }
-        });
-        </script>
-        """, unsafe_allow_html=True,
-    )
-
-    # Sinkronisasi URL dengan session_state
+    # Sinkronisasi URL → session_state
     query_params = st.query_params
     if "page" in query_params:
         if query_params["page"] == "classify":
