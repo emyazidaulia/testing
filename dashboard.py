@@ -1,29 +1,36 @@
+import os
 import streamlit as st
 import numpy as np
 from PIL import Image
 import tensorflow as tf
 
-# Coba impor YOLO, jika gagal tampilkan pesan agar app tetap jalan
+# Gunakan direktori sementara agar tidak crash
+os.environ["YOLO_CONFIG_DIR"] = "/tmp/Ultralytics"
+os.environ["MPLCONFIGDIR"] = "/tmp/matplotlib"
+
+# Import YOLO dengan aman
 try:
     from ultralytics import YOLO
     YOLO_AVAILABLE = True
 except Exception as e:
-    st.warning(f"⚠️ YOLO tidak bisa dimuat: {e}")
+    st.warning(f"⚠️ YOLO tidak aktif di environment ini: {e}")
     YOLO_AVAILABLE = False
 
-# ==========================
-# Fungsi Lazy Load Model
-# ==========================
+
 @st.cache_resource
 def load_yolo_model():
     if YOLO_AVAILABLE:
-        return YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt")
-    else:
-        return None
+        model = YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt")
+        model.overrides["save"] = False  # nonaktifkan penyimpanan otomatis
+        model.overrides["project"] = "/tmp"
+        return model
+    return None
+
 
 @st.cache_resource
 def load_classifier_model():
     return tf.keras.models.load_model("model/Muhammad Yazid Aulia_Laporan 2.h5")
+
 
 # ==========================
 # UI
@@ -39,24 +46,21 @@ if uploaded_file is not None:
 
     if menu == "Deteksi Objek (YOLO)":
         yolo_model = load_yolo_model()
-        if yolo_model is not None:
+        if yolo_model:
             with st.spinner("🔍 Sedang mendeteksi objek..."):
-                results = yolo_model(img)
+                results = yolo_model.predict(img, verbose=False)
                 result_img = results[0].plot()
                 st.image(result_img, caption="Hasil Deteksi", use_container_width=True)
         else:
-            st.error("Model YOLO tidak tersedia. Pastikan dependensi ultralytics terinstal dengan benar.")
+            st.error("Model YOLO tidak dapat digunakan di server ini.")
 
     elif menu == "Klasifikasi Gambar":
         classifier = load_classifier_model()
         with st.spinner("🧩 Sedang melakukan klasifikasi..."):
-            # Preprocessing
             img_resized = img.resize((224, 224))
             img_array = tf.keras.preprocessing.image.img_to_array(img_resized)
-            img_array = np.expand_dims(img_array, axis=0)
-            img_array = img_array / 255.0
+            img_array = np.expand_dims(img_array, axis=0) / 255.0
 
-            # Prediksi
             prediction = classifier.predict(img_array)
             class_index = np.argmax(prediction)
             probability = np.max(prediction)
@@ -64,6 +68,5 @@ if uploaded_file is not None:
             st.success("✅ Klasifikasi Berhasil!")
             st.write("### Hasil Prediksi:", class_index)
             st.write("### Probabilitas:", f"{probability:.4f}")
-
 else:
-    st.info("📁 Silakan unggah gambar terlebih dahulu untuk memulai.")
+    st.info("📁 Silakan unggah gambar terlebih dahulu.")
