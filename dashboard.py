@@ -36,7 +36,7 @@ if "page" not in st.session_state:
 
 def goto(page):
     st.session_state.page = page
-    st.experimental_rerun()
+    st.rerun()
 
 # ====== HOME PAGE ======
 if st.session_state.page == "home":
@@ -44,62 +44,84 @@ if st.session_state.page == "home":
         <style>
         .block-container {padding:0; margin:0;}
         header, footer {visibility:hidden;}
-        .full-container {
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            height:100vh;
-            width:100vw;
-            overflow:hidden;
+        .split-screen {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
         }
-        .side {
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            font-size:2.2rem;
-            font-weight:700;
-            color:white;
-            text-align:center;
-            cursor:pointer;
-            transition:all 0.25s ease;
+        .left, .right {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.3rem;
+            font-weight: 700;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
             user-select: none;
         }
-        .side:hover {transform:scale(1.03); filter:brightness(1.03);}
-        .red {background:linear-gradient(135deg,#ff2b2b,#ff6b6b);}
-        .blue {background:linear-gradient(135deg,#007bff,#00bfff);}
+        .left { background: linear-gradient(135deg, #ff2b2b, #ff6b6b); }
+        .right { background: linear-gradient(135deg, #007bff, #00bfff); }
+        .left:hover, .right:hover { transform: scale(1.03); filter: brightness(1.05); }
         </style>
+
+        <div class="split-screen">
+            <div class="left" id="leftBox">🍝 Eat uncooked pasta<br>(Image Classification)</div>
+            <div class="right" id="rightBox">🥤 Drink salted coke<br>(Object Detection)</div>
+        </div>
+
+        <script>
+        const streamlitEvents = window.parent.postMessage;
+        document.getElementById("leftBox").addEventListener("click", () => {
+            streamlitEvents({ isStreamlitMessage: true, type: "goto_classify" }, "*");
+        });
+        document.getElementById("rightBox").addEventListener("click", () => {
+            streamlitEvents({ isStreamlitMessage: true, type: "goto_detect" }, "*");
+        });
+        </script>
     """, unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🍝 Eat uncooked pasta\n(Image Classification)", use_container_width=True):
-            goto("classify")
-        st.markdown(
-            "<div class='side red' onclick='window.parent.postMessage({streamlitMessage: \"goto_classify\"}, \"*\")'></div>",
-            unsafe_allow_html=True
-        )
+    # Tangani klik dari JavaScript
+    st.markdown(
+        """
+        <script>
+        window.addEventListener("message", (event) => {
+            if (event.data.type === "goto_classify") {
+                window.location.href = "?page=classify";
+            }
+            if (event.data.type === "goto_detect") {
+                window.location.href = "?page=detect";
+            }
+        });
+        </script>
+        """, unsafe_allow_html=True,
+    )
 
-    with col2:
-        if st.button("🥤 Drink salted coke\n(Object Detection)", use_container_width=True):
+    # Sinkronisasi URL dengan session_state
+    query_params = st.query_params
+    if "page" in query_params:
+        if query_params["page"] == "classify":
+            goto("classify")
+        elif query_params["page"] == "detect":
             goto("detect")
-        st.markdown(
-            "<div class='side blue' onclick='window.parent.postMessage({streamlitMessage: \"goto_detect\"}, \"*\")'></div>",
-            unsafe_allow_html=True
-        )
 
 # ====== IMAGE CLASSIFICATION PAGE ======
 elif st.session_state.page == "classify":
     st.title("🍝 Image Classification")
-    if st.button("⬅️ Kembali"):
+    if st.button("⬅️ Kembali ke Home"):
         goto("home")
 
-    uploaded_file = st.file_uploader("Unggah gambar", type=["jpg","jpeg","png"])
+    uploaded_file = st.file_uploader("Unggah gambar", type=["jpg", "jpeg", "png"])
     if uploaded_file:
         img = Image.open(uploaded_file).convert("RGB")
         st.image(img, caption="Gambar diunggah", use_column_width=True)
         model = load_classifier_model()
-        img_resized = img.resize((128,128))
+        img_resized = img.resize((128, 128))
         arr = tf.keras.preprocessing.image.img_to_array(img_resized)
-        arr = np.expand_dims(arr,0)/255.0
+        arr = np.expand_dims(arr, 0) / 255.0
         with st.spinner("Klasifikasi..."):
             pred = model.predict(arr)
             idx = int(np.argmax(pred))
@@ -111,12 +133,12 @@ elif st.session_state.page == "classify":
 # ====== OBJECT DETECTION PAGE ======
 elif st.session_state.page == "detect":
     st.title("🥤 Object Detection")
-    if st.button("⬅️ Kembali"):
+    if st.button("⬅️ Kembali ke Home"):
         goto("home")
 
     if not YOLO_AVAILABLE:
         st.error(f"YOLO tidak tersedia: {YOLO_IMPORT_ERROR}")
-    uploaded_file = st.file_uploader("Unggah gambar", type=["jpg","jpeg","png"])
+    uploaded_file = st.file_uploader("Unggah gambar", type=["jpg", "jpeg", "png"])
     if uploaded_file:
         img = Image.open(uploaded_file).convert("RGB")
         st.image(img, caption="Gambar diunggah", use_column_width=True)
