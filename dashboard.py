@@ -38,25 +38,17 @@ def goto(page):
     st.session_state.page = page
     st.experimental_rerun()
 
-# Hilangkan margin/padding bawaan
-st.markdown("""
-    <style>
-    .block-container {padding:0; margin:0;}
-    header, footer {visibility:hidden;}
-    .full-container {height:100vh; width:100vw;}
-    </style>
-    """, unsafe_allow_html=True)
-
 # ====== HOME PAGE ======
 if st.session_state.page == "home":
     st.markdown("""
         <style>
+        .block-container {padding:0; margin:0;}
+        header, footer {visibility:hidden;}
         .full-container {
             display:grid;
             grid-template-columns:1fr 1fr;
             height:100vh;
             width:100vw;
-            margin:0;
             overflow:hidden;
         }
         .side {
@@ -75,53 +67,24 @@ if st.session_state.page == "home":
         .red {background:linear-gradient(135deg,#ff2b2b,#ff6b6b);}
         .blue {background:linear-gradient(135deg,#007bff,#00bfff);}
         </style>
-
-        <div class="full-container">
-            <div class="side red" id="redSide">
-                🍝 Eat uncooked pasta<br>(Image Classification)
-            </div>
-            <div class="side blue" id="blueSide">
-                🥤 Drink salted coke<br>(Object Detection)
-            </div>
-        </div>
-
-        <script>
-        // Kirim pesan postMessage ke parent
-        document.getElementById("redSide").onclick = () => {
-            window.parent.postMessage({streamlitMessage: "goto_classify"}, "*");
-        };
-        document.getElementById("blueSide").onclick = () => {
-            window.parent.postMessage({streamlitMessage: "goto_detect"}, "*");
-        };
-
-        // Saat menerima message dari parent streamlit (opsional)
-        window.addEventListener("message", (event) => {
-            // no-op, placeholder if needed
-        });
-        </script>
     """, unsafe_allow_html=True)
 
-    # === GANTI: gunakan st.query_params (bukan experimental) ===
-    msg = st.query_params.get("msg", [None])[0]
-    if msg == "goto_classify":
-        goto("classify")
-    elif msg == "goto_detect":
-        goto("detect")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🍝 Eat uncooked pasta\n(Image Classification)", use_container_width=True):
+            goto("classify")
+        st.markdown(
+            "<div class='side red' onclick='window.parent.postMessage({streamlitMessage: \"goto_classify\"}, \"*\")'></div>",
+            unsafe_allow_html=True
+        )
 
-    # Listener JS untuk menulis query param dan memicu Streamlit menangkapnya
-    st.markdown("""
-        <script>
-        window.addEventListener("message", (event) => {
-            const data = event.data.streamlitMessage;
-            if (data === "goto_classify" || data === "goto_detect") {
-                const newUrl = new URL(window.location);
-                newUrl.searchParams.set("msg", data);
-                // ubah location sehingga Streamlit membaca st.query_params tanpa kehilangan session_state
-                window.location.href = newUrl;
-            }
-        });
-        </script>
-    """, unsafe_allow_html=True)
+    with col2:
+        if st.button("🥤 Drink salted coke\n(Object Detection)", use_container_width=True):
+            goto("detect")
+        st.markdown(
+            "<div class='side blue' onclick='window.parent.postMessage({streamlitMessage: \"goto_detect\"}, \"*\")'></div>",
+            unsafe_allow_html=True
+        )
 
 # ====== IMAGE CLASSIFICATION PAGE ======
 elif st.session_state.page == "classify":
