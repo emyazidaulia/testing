@@ -21,7 +21,7 @@ except Exception as e:
 def load_yolo_model():
     if YOLO_AVAILABLE:
         model = YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt")
-        model.overrides["save"] = False  # nonaktifkan penyimpanan otomatis
+        model.overrides["save"] = False
         model.overrides["project"] = "/tmp"
         return model
     return None
@@ -33,18 +33,83 @@ def load_classifier_model():
 
 
 # ==========================
-# UI
+# Tampilan Utama
 # ==========================
-st.title("🧠 Image Classification & Object Detection App")
+st.set_page_config(page_title="Would You Rather: AI Edition", layout="wide")
 
-menu = st.sidebar.selectbox("Pilih Mode:", ["Deteksi Objek (YOLO)", "Klasifikasi Gambar"])
+if "mode" not in st.session_state:
+    st.session_state.mode = None
+
+if st.session_state.mode is None:
+    st.markdown(
+        """
+        <style>
+        .choice-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 90vh;
+            gap: 2rem;
+        }
+        .choice {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .choice:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+        }
+        .red { background: linear-gradient(135deg, #ff2b2b, #ff6b6b); }
+        .blue { background: linear-gradient(135deg, #007bff, #00bfff); }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        """
+        <div class="choice-container">
+            <div class="choice red" onclick="window.location.href='?mode=classify'">
+                🍝 Eat uncooked pasta<br>(Image Classification)
+            </div>
+            <div class="choice blue" onclick="window.location.href='?mode=detect'">
+                🥤 Drink salted coke<br>(Object Detection)
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    query_params = st.experimental_get_query_params()
+    if "mode" in query_params:
+        mode = query_params["mode"][0]
+        if mode == "classify":
+            st.session_state.mode = "Klasifikasi Gambar"
+        elif mode == "detect":
+            st.session_state.mode = "Deteksi Objek (YOLO)"
+    st.stop()
+
+# ==========================
+# Mode Klasifikasi atau Deteksi
+# ==========================
+st.title(f"🧠 {st.session_state.mode}")
+
 uploaded_file = st.file_uploader("Unggah Gambar", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
     img = Image.open(uploaded_file)
     st.image(img, caption="📸 Gambar yang Diupload", use_container_width=True)
 
-    if menu == "Deteksi Objek (YOLO)":
+    if st.session_state.mode == "Deteksi Objek (YOLO)":
         yolo_model = load_yolo_model()
         if yolo_model:
             with st.spinner("🔍 Sedang mendeteksi objek..."):
@@ -54,7 +119,7 @@ if uploaded_file is not None:
         else:
             st.error("Model YOLO tidak dapat digunakan di server ini.")
 
-    elif menu == "Klasifikasi Gambar":
+    elif st.session_state.mode == "Klasifikasi Gambar":
         classifier = load_classifier_model()
         with st.spinner("🧩 Sedang melakukan klasifikasi..."):
             img_resized = img.resize((128, 128))
