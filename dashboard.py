@@ -1,82 +1,81 @@
 import streamlit as st
 
-# --- Konfigurasi halaman ---
-st.set_page_config(page_title="Image Classifier", layout="wide")
+# --- Konfigurasi Halaman ---
+st.set_page_config(page_title="Image App", layout="wide")
 
-# --- Inisialisasi session_state untuk navigasi ---
+# --- Inisialisasi session_state ---
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
-# --- Fungsi navigasi ---
+# --- Fungsi Navigasi ---
 def go_to(page_name):
     st.session_state.page = page_name
 
-# --- Sidebar ---
+# --- Sidebar Navigasi ---
 with st.sidebar:
-    st.title("🔍 Menu Navigasi")
-    if st.button("🏠 Home"):
-        go_to("home")
-    if st.button("🖼️ Klasifikasi Gambar"):
-        go_to("classify")
-    if st.button("🎯 Deteksi Objek"):
-        go_to("detect")
+    st.title("🔍 Navigasi")
+    st.button("🏠 Home", on_click=lambda: go_to("home"))
+    st.button("🖼️ Klasifikasi Gambar", on_click=lambda: go_to("classify"))
+    st.button("🎯 Deteksi Objek", on_click=lambda: go_to("detect"))
 
-# --- Tampilan halaman HOME ---
+# --- Halaman HOME ---
 if st.session_state.page == "home":
     st.markdown("<h1 style='text-align:center;'>Selamat Datang!</h1>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
 
-    # Kotak Merah - menuju klasifikasi gambar
+    # CSS custom: buat div bisa klik + animasi hover
+    st.markdown("""
+        <style>
+        .clickable-box {
+            height: 400px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .clickable-box:hover {
+            transform: scale(1.03);
+            box-shadow: 0px 0px 25px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Kotak Merah
     with col1:
+        if st.button(" ", key="red_box", use_container_width=True):
+            go_to("classify")
+
         st.markdown(
             """
-            <div style="
-                background-color:#ff4b4b;
-                height:400px;
-                border-radius:20px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                color:white;
-                font-size:28px;
-                font-weight:bold;
-                cursor:pointer;
-            " onclick="window.location.href='?page=classify'">
+            <div class="clickable-box" 
+                 style="background-color:#ff4b4b; margin-top:-70px;"
+                 onclick="window.parent.postMessage({type: 'streamlit:setComponentValue', key: 'red_box', value: true}, '*')">
                 KLASIFIKASI GAMBAR
             </div>
             """,
-            unsafe_allow_html=True,
+            unsafe_allow_html=True
         )
 
-        # Tombol cadangan untuk Streamlit event (agar interaktif juga di rerun)
-        if st.button("➡️ Buka Klasifikasi Gambar", key="to_classify"):
-            go_to("classify")
-
-    # Kotak Biru - menuju deteksi objek
+    # Kotak Biru
     with col2:
+        if st.button(" ", key="blue_box", use_container_width=True):
+            go_to("detect")
+
         st.markdown(
             """
-            <div style="
-                background-color:#4287f5;
-                height:400px;
-                border-radius:20px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                color:white;
-                font-size:28px;
-                font-weight:bold;
-                cursor:pointer;
-            " onclick="window.location.href='?page=detect'">
+            <div class="clickable-box"
+                 style="background-color:#4287f5; margin-top:-70px;"
+                 onclick="window.parent.postMessage({type: 'streamlit:setComponentValue', key: 'blue_box', value: true}, '*')">
                 DETEKSI OBJEK
             </div>
             """,
-            unsafe_allow_html=True,
+            unsafe_allow_html=True
         )
-
-        # Tombol cadangan
-        if st.button("➡️ Buka Deteksi Objek", key="to_detect"):
-            go_to("detect")
 
 # --- Halaman KLASIFIKASI GAMBAR ---
 elif st.session_state.page == "classify":
@@ -85,10 +84,9 @@ elif st.session_state.page == "classify":
 
     if uploaded_file:
         st.image(uploaded_file, caption="Gambar yang diupload", use_column_width=True)
-        st.success("Model klasifikasi bisa dijalankan di sini (gunakan model.h5 kamu).")
+        st.success("Model klasifikasi siap dijalankan di sini (gunakan model.h5 kamu).")
 
-    if st.button("⬅️ Kembali ke Home"):
-        go_to("home")
+    st.button("⬅️ Kembali ke Home", on_click=lambda: go_to("home"))
 
 # --- Halaman DETEKSI OBJEK ---
 elif st.session_state.page == "detect":
@@ -97,7 +95,6 @@ elif st.session_state.page == "detect":
 
     if uploaded_file:
         st.image(uploaded_file, caption="Gambar yang diupload", use_column_width=True)
-        st.success("Model deteksi bisa dijalankan di sini (gunakan model YOLO, dll).")
+        st.success("Model deteksi siap dijalankan di sini (gunakan model YOLO, dll).")
 
-    if st.button("⬅️ Kembali ke Home"):
-        go_to("home")
+    st.button("⬅️ Kembali ke Home", on_click=lambda: go_to("home"))
