@@ -1,11 +1,10 @@
-# app.py
 import os
 import streamlit as st
 import numpy as np
 from PIL import Image
 import tensorflow as tf
 
-# Pastikan file UTF-8 (biasanya default). Jika masih error, simpan file sebagai UTF-8.
+# Persiapan environment
 os.environ["YOLO_CONFIG_DIR"] = "/tmp/Ultralytics"
 os.environ["MPLCONFIGDIR"] = "/tmp/matplotlib"
 
@@ -13,7 +12,6 @@ try:
     from ultralytics import YOLO
     YOLO_AVAILABLE = True
 except Exception as e:
-    # Jangan panggil st.warning saat import time terlalu awal jika tidak ingin menulis ke UI saat import.
     YOLO_AVAILABLE = False
     YOLO_IMPORT_ERROR = str(e)
 
@@ -35,7 +33,7 @@ st.set_page_config(page_title="Would You Rather AI", layout="wide")
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
-# ====== HOME ======
+# ============ HALAMAN HOME ============
 if st.session_state.page == "home":
     st.markdown(
         """
@@ -59,50 +57,74 @@ if st.session_state.page == "home":
             color: white;
             text-align: center;
             transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
         }
         .red { background: linear-gradient(135deg, #ff2b2b, #ff6b6b); }
         .blue { background: linear-gradient(135deg, #007bff, #00bfff); }
         .box:hover {
             transform: scale(1.03);
-            box-shadow: 0 0 25px rgba(0,0,0,0.2);
+            box-shadow: 0 0 25px rgba(0,0,0,0.3);
         }
         .label {
-            pointer-events: none; /* biar klik kena tombol di atas */
+            z-index: 2;
+        }
+        .overlay-button {
+            position: absolute;
+            inset: 0;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            z-index: 3;
         }
         </style>
         """,
         unsafe_allow_html=True
     )
 
-    # Buat label sebagai variable agar tidak memecah string literal
-    red_label = "🍝 Eat uncooked pasta\n(Image Classification)"
-    blue_label = "🥤 Drink salted coke\n(Object Detection)"
+    st.markdown('<div class="container">', unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2, gap="large")
-    with col1:
-        # Tombol di atas kotak — tombol menangkap klik user
-        if st.button(red_label, key="btn_classify"):
-            st.session_state.page = "classify"
-            st.experimental_rerun()
-        # Kotak visual (CSS) di bawah tombol
-        st.markdown('<div class="box red"><div class="label"></div></div>', unsafe_allow_html=True)
+    # ====== KOTAK MERAH (Klasifikasi) ======
+    red_click = st.markdown(
+        """
+        <form action="?page=classify" method="get">
+            <button class="overlay-button" type="submit"></button>
+            <div class="box red">
+                <div class="label">🍝 Eat uncooked pasta<br>(Image Classification)</div>
+            </div>
+        </form>
+        """,
+        unsafe_allow_html=True
+    )
 
-    with col2:
-        if st.button(blue_label, key="btn_detect"):
-            st.session_state.page = "detect"
-            st.experimental_rerun()
-        st.markdown('<div class="box blue"><div class="label"></div></div>', unsafe_allow_html=True)
+    # ====== KOTAK BIRU (Deteksi) ======
+    blue_click = st.markdown(
+        """
+        <form action="?page=detect" method="get">
+            <button class="overlay-button" type="submit"></button>
+            <div class="box blue">
+                <div class="label">🥤 Drink salted coke<br>(Object Detection)</div>
+            </div>
+        </form>
+        """,
+        unsafe_allow_html=True
+    )
 
-# ====== CLASSIFY PAGE ======
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Tangkap query parameter agar klik HTML bisa ubah halaman
+    query_params = st.query_params
+    if "page" in query_params:
+        st.session_state.page = query_params["page"]
+        st.experimental_rerun()
+
+# ============ HALAMAN KLASIFIKASI ============
 elif st.session_state.page == "classify":
     st.title("🍝 Image Classification Mode")
     if st.button("⬅️ Kembali ke Menu Awal"):
         st.session_state.page = "home"
         st.experimental_rerun()
 
-    # Tampilkan info import YOLO error jika ada (tidak kritikal untuk klasifikasi)
-    if not YOLO_AVAILABLE:
-        st.info("YOLO tidak terpasang di environment — hanya klasifikasi yang tersedia.")
     uploaded_file = st.file_uploader("Unggah gambar untuk diklasifikasi", type=["jpg", "jpeg", "png"])
     if uploaded_file:
         try:
@@ -124,7 +146,7 @@ elif st.session_state.page == "classify":
     else:
         st.info("📁 Silakan unggah gambar terlebih dahulu.")
 
-# ====== DETECT PAGE ======
+# ============ HALAMAN DETEKSI ============
 elif st.session_state.page == "detect":
     st.title("🥤 Object Detection Mode (YOLO)")
     if st.button("⬅️ Kembali ke Menu Awal"):
