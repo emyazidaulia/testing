@@ -82,13 +82,15 @@ with st.sidebar:
 
 # --- Halaman HOME ---
 if st.session_state.page == "home":
+    # Path gambar lokal (sesuai folder di repo)
     set_slideshow_background(
         [
-            "images/bg1.jpg",
-            "images/bg2.jpg",
-            "images/bg3.jpg",
+            "sample_images/00000055.jpg",
+            "sample_images/00000076.jpg",
+            "sample_images/00000078.jpg",
+            "sample_images/abc016.jpg",
         ],
-        duration=15  # total durasi 15 detik per siklus
+        duration=15
     )
 
     st.markdown("<h1 style='text-align:center;'>Selamat Datang!</h1>", unsafe_allow_html=True)
@@ -107,9 +109,9 @@ if st.session_state.page == "home":
 elif st.session_state.page == "classify":
     set_slideshow_background(
         [
-            "images/class1.jpg",
-            "images/class2.jpg",
-            "images/class3.jpg",
+            "sample_images/abc017.jpg",
+            "sample_images/abc018.jpg",
+            "sample_images/00000058.png",
         ],
         duration=12
     )
@@ -128,9 +130,9 @@ elif st.session_state.page == "classify":
 elif st.session_state.page == "detect":
     set_slideshow_background(
         [
-            "images/detect1.jpg",
-            "images/detect2.jpg",
-            "images/detect3.jpg",
+            "sample_images/00000055.jpg",
+            "sample_images/abc016.jpg",
+            "sample_images/abc018.jpg",
         ],
         duration=14
     )
