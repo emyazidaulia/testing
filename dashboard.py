@@ -3,7 +3,7 @@ import streamlit as st
 # --- Konfigurasi halaman ---
 st.set_page_config(page_title="Image Classifier", layout="wide")
 
-# --- Inisialisasi session_state untuk navigasi ---
+# --- Inisialisasi session_state ---
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
@@ -11,22 +11,61 @@ if "page" not in st.session_state:
 def go_to(page_name):
     st.session_state.page = page_name
 
-# --- Fungsi untuk mengatur background dinamis ---
-def set_background(image_url: str):
+# --- Fungsi untuk background slideshow (fade in/out) ---
+def set_slideshow_background(image_paths, duration=10):
+    """
+    Menampilkan background slideshow dari beberapa gambar lokal.
+    - image_paths: list path gambar lokal
+    - duration: waktu total 1 siklus (detik)
+    """
+    images_css = ""
+    total = len(image_paths)
+    for i, img in enumerate(image_paths):
+        delay = (i * (duration / total))
+        images_css += f"""
+        .bg-slide:nth-child({i+1}) {{
+            background-image: url("{img}");
+            animation-delay: {delay}s;
+        }}
+        """
+
     st.markdown(
         f"""
         <style>
         [data-testid="stAppViewContainer"] {{
-            background-image: url("{image_url}");
+            position: relative;
+            overflow: hidden;
+        }}
+
+        .bg-slideshow {{
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }}
+
+        .bg-slide {{
+            position: absolute;
+            width: 100%;
+            height: 100%;
             background-size: cover;
             background-position: center;
-            background-repeat: no-repeat;
-            transition: background 1s ease-in-out;
+            opacity: 0;
+            animation: fadeinout {duration}s infinite;
         }}
-        [data-testid="stSidebar"] {{
-            background-color: rgba(0, 0, 0, 0.6);
+
+        @keyframes fadeinout {{
+            0%, 100% {{ opacity: 0; }}
+            10%, 45% {{ opacity: 1; }}
         }}
+
+        {images_css}
         </style>
+
+        <div class="bg-slideshow">
+            {''.join('<div class="bg-slide"></div>' for _ in image_paths)}
+        </div>
         """,
         unsafe_allow_html=True
     )
@@ -43,7 +82,15 @@ with st.sidebar:
 
 # --- Halaman HOME ---
 if st.session_state.page == "home":
-    set_background("https://images.unsplash.com/photo-1507525428034-b723cf961d3e")  # 🌊 contoh gambar
+    set_slideshow_background(
+        [
+            "images/bg1.jpg",
+            "images/bg2.jpg",
+            "images/bg3.jpg",
+        ],
+        duration=15  # total durasi 15 detik per siklus
+    )
+
     st.markdown("<h1 style='text-align:center;'>Selamat Datang!</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center;'>Pilih salah satu menu di bawah untuk memulai.</p>", unsafe_allow_html=True)
 
@@ -58,7 +105,15 @@ if st.session_state.page == "home":
 
 # --- Halaman KLASIFIKASI GAMBAR ---
 elif st.session_state.page == "classify":
-    set_background("https://images.unsplash.com/photo-1549924231-f129b911e442")  # 🖼 contoh background berbeda
+    set_slideshow_background(
+        [
+            "images/class1.jpg",
+            "images/class2.jpg",
+            "images/class3.jpg",
+        ],
+        duration=12
+    )
+
     st.header("🖼 Menu Klasifikasi Gambar")
     uploaded_file = st.file_uploader("Upload gambar untuk klasifikasi", type=["jpg", "jpeg", "png"])
 
@@ -71,7 +126,15 @@ elif st.session_state.page == "classify":
 
 # --- Halaman DETEKSI OBJEK ---
 elif st.session_state.page == "detect":
-    set_background("https://images.unsplash.com/photo-1518779578993-ec3579fee39f")  # 🎯 contoh background lain
+    set_slideshow_background(
+        [
+            "images/detect1.jpg",
+            "images/detect2.jpg",
+            "images/detect3.jpg",
+        ],
+        duration=14
+    )
+
     st.header("🎯 Menu Deteksi Objek")
     uploaded_file = st.file_uploader("Upload gambar untuk deteksi objek", type=["jpg", "jpeg", "png"])
 
