@@ -1,76 +1,61 @@
 import streamlit as st
-import base64
-import os
 
-# --- Fungsi untuk encode gambar lokal ke base64 ---
-def load_image_as_base64(path):
-    with open(path, "rb") as img_file:
-        return base64.b64encode(img_file.read()).decode()
+# --- Konfigurasi halaman ---
+st.set_page_config(page_title="Image Classifier", layout="wide")
 
-# --- Fungsi untuk background slideshow (fade in–fade out) ---
-def set_slideshow_background_local(image_paths, duration=18):
-    base64_images = [f"data:image/jpeg;base64,{load_image_as_base64(img)}" for img in image_paths]
-    total = len(base64_images)
-    css_images = ""
+# --- Inisialisasi session_state untuk navigasi ---
+if "page" not in st.session_state:
+    st.session_state.page = "home"
 
-    for i, url in enumerate(base64_images):
-        delay = (i * (duration / total))
-        css_images += f"""
-        .bg-slide:nth-child({i+1}) {{
-            background-image: url('{url}');
-            animation-delay: {delay}s;
-        }}
-        """
+# --- Fungsi navigasi ---
+def go_to(page_name):
+    st.session_state.page = page_name
 
-    st.markdown(f"""
-    <style>
-    [data-testid="stAppViewContainer"] {{
-        position: relative;
-        overflow: hidden;
-        background: black;
-    }}
+# --- Sidebar Navigasi ---
+with st.sidebar:
+    st.title("🔍 Menu Navigasi")
+    if st.button("🏠 Home"):
+        go_to("home")
+    if st.button("🖼 Klasifikasi Gambar"):
+        go_to("classify")
+    if st.button("🎯 Deteksi Objek"):
+        go_to("detect")
 
-    .bg-slideshow {{
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-    }}
+# --- Halaman HOME ---
+if st.session_state.page == "home":
+    st.markdown("<h1 style='text-align:center;'>Selamat Datang!</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center;'>Pilih salah satu menu di bawah untuk memulai.</p>", unsafe_allow_html=True)
 
-    .bg-slide {{
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background-size: cover;
-        background-position: center;
-        opacity: 0;
-        animation: fadeinout {duration}s infinite;
-    }}
+    # Layout tombol di tengah
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        st.markdown("<div style='height:100px;'></div>", unsafe_allow_html=True)  # jarak atas
+        if st.button("🖼 Buka Klasifikasi Gambar", use_container_width=True):
+            go_to("classify")
+        st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
+        if st.button("🎯 Buka Deteksi Objek", use_container_width=True):
+            go_to("detect")
 
-    @keyframes fadeinout {{
-        0%, 100% {{ opacity: 0; }}
-        10%, 45% {{ opacity: 1; }}
-    }}
+# --- Halaman KLASIFIKASI GAMBAR ---
+elif st.session_state.page == "classify":
+    st.header("🖼 Menu Klasifikasi Gambar")
+    uploaded_file = st.file_uploader("Upload gambar untuk klasifikasi", type=["jpg", "jpeg", "png"])
 
-    .bg-slideshow::after {{
-        content: "";
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.4);
-        z-index: 1;
-    }}
+    if uploaded_file:
+        st.image(uploaded_file, caption="Gambar yang diupload", use_column_width=True)
+        st.success("Model klasifikasi dapat dijalankan di sini (gunakan model.h5 kamu).")
 
-    {css_images}
-    </style>
+    if st.button("⬅ Kembali ke Home"):
+        go_to("home")
 
-    <div class="bg-slideshow">
-        {''.join('<div class="bg-slide"></div>' for _ in base64_images)}
-    </div>
-    """, unsafe_allow_html=True)
+# --- Halaman DETEKSI OBJEK ---
+elif st.session_state.page == "detect":
+    st.header("🎯 Menu Deteksi Objek")
+    uploaded_file = st.file_uploader("Upload gambar untuk deteksi objek", type=["jpg", "jpeg", "png"])
 
-# --- Contoh penggunaan ---
-image_folder = "sample_images"
-image_files = [os.path.join(image_folder, f) for f in os.listdir(image_folder) if f.endswith(('.jpg', '.jpeg', '.png'))]
-set_slideshow_background_local(image_files, duration=20)
+    if uploaded_file:
+        st.image(uploaded_file, caption="Gambar yang diupload", use_column_width=True)
+        st.success("Model deteksi dapat dijalankan di sini (gunakan model YOLO, dll).")
+
+    if st.button("⬅ Kembali ke Home"):
+        go_to("home")
