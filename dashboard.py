@@ -1,145 +1,103 @@
-import os
 import streamlit as st
-import numpy as np
-from PIL import Image
-import tensorflow as tf
 
-# ===== KONFIGURASI DASAR =====
-os.environ["YOLO_CONFIG_DIR"] = "/tmp/Ultralytics"
-os.environ["MPLCONFIGDIR"] = "/tmp/matplotlib"
+# --- Konfigurasi halaman ---
+st.set_page_config(page_title="Image Classifier", layout="wide")
 
-try:
-    from ultralytics import YOLO
-    YOLO_AVAILABLE = True
-except Exception as e:
-    YOLO_AVAILABLE = False
-    YOLO_IMPORT_ERROR = str(e)
-
-@st.cache_resource
-def load_yolo_model():
-    if YOLO_AVAILABLE:
-        model = YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt")
-        model.overrides["save"] = False
-        model.overrides["project"] = "/tmp"
-        return model
-    return None
-
-@st.cache_resource
-def load_classifier_model():
-    return tf.keras.models.load_model("model/Muhammad Yazid Aulia_Laporan 2.h5")
-
-st.set_page_config(page_title="Would You Rather AI", layout="wide")
-
-# ===== STATE HALAMAN =====
+# --- Inisialisasi session_state untuk navigasi ---
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
-def goto(page):
-    st.session_state.page = page
-    st.rerun()
+# --- Fungsi navigasi ---
+def go_to(page_name):
+    st.session_state.page = page_name
 
-# ====== HOME PAGE ======
+# --- Sidebar ---
+with st.sidebar:
+    st.title("🔍 Menu Navigasi")
+    if st.button("🏠 Home"):
+        go_to("home")
+    if st.button("🖼️ Klasifikasi Gambar"):
+        go_to("classify")
+    if st.button("🎯 Deteksi Objek"):
+        go_to("detect")
+
+# --- Tampilan halaman HOME ---
 if st.session_state.page == "home":
-    st.markdown("""
-        <style>
-        .block-container {padding:0; margin:0;}
-        header, footer {visibility:hidden;}
-        .split-screen {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-        }
-        .left, .right {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            text-align: center;
-        }
-        .left { background: linear-gradient(135deg, #ff2b2b, #ff6b6b); }
-        .right { background: linear-gradient(135deg, #007bff, #00bfff); }
+    st.markdown("<h1 style='text-align:center;'>Selamat Datang!</h1>", unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
 
-        .center-box {
-            padding: 40px 60px;
-            border-radius: 20px;
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white;
-            font-weight: 700;
-            font-size: 2rem;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            backdrop-filter: blur(5px);
-        }
-        .center-box:hover {
-            transform: scale(1.05);
-            background-color: rgba(255,255,255,0.3);
-        }
-        </style>
-
-        <div class="split-screen">
-            <div class="left">
-                <div class="center-box" onclick="window.location.href='?page=classify'">
-                    🍝 Eat uncooked pasta<br>(Image Classification)
-                </div>
+    # Kotak Merah - menuju klasifikasi gambar
+    with col1:
+        st.markdown(
+            """
+            <div style="
+                background-color:#ff4b4b;
+                height:400px;
+                border-radius:20px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:white;
+                font-size:28px;
+                font-weight:bold;
+                cursor:pointer;
+            " onclick="window.location.href='?page=classify'">
+                KLASIFIKASI GAMBAR
             </div>
-            <div class="right">
-                <div class="center-box" onclick="window.location.href='?page=detect'">
-                    🥤 Drink salted coke<br>(Object Detection)
-                </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        # Tombol cadangan untuk Streamlit event (agar interaktif juga di rerun)
+        if st.button("➡️ Buka Klasifikasi Gambar", key="to_classify"):
+            go_to("classify")
+
+    # Kotak Biru - menuju deteksi objek
+    with col2:
+        st.markdown(
+            """
+            <div style="
+                background-color:#4287f5;
+                height:400px;
+                border-radius:20px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:white;
+                font-size:28px;
+                font-weight:bold;
+                cursor:pointer;
+            " onclick="window.location.href='?page=detect'">
+                DETEKSI OBJEK
             </div>
-        </div>
-    """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True,
+        )
 
-    # Sinkronisasi URL → session_state
-    query_params = st.query_params
-    if "page" in query_params:
-        if query_params["page"] == "classify":
-            goto("classify")
-        elif query_params["page"] == "detect":
-            goto("detect")
+        # Tombol cadangan
+        if st.button("➡️ Buka Deteksi Objek", key="to_detect"):
+            go_to("detect")
 
-# ====== IMAGE CLASSIFICATION PAGE ======
+# --- Halaman KLASIFIKASI GAMBAR ---
 elif st.session_state.page == "classify":
-    st.title("🍝 Image Classification")
-    if st.button("⬅️ Kembali ke Home"):
-        goto("home")
+    st.header("🖼️ Menu Klasifikasi Gambar")
+    uploaded_file = st.file_uploader("Upload gambar untuk klasifikasi", type=["jpg", "jpeg", "png"])
 
-    uploaded_file = st.file_uploader("Unggah gambar", type=["jpg", "jpeg", "png"])
     if uploaded_file:
-        img = Image.open(uploaded_file).convert("RGB")
-        st.image(img, caption="Gambar diunggah", use_column_width=True)
-        model = load_classifier_model()
-        img_resized = img.resize((128, 128))
-        arr = tf.keras.preprocessing.image.img_to_array(img_resized)
-        arr = np.expand_dims(arr, 0) / 255.0
-        with st.spinner("Klasifikasi..."):
-            pred = model.predict(arr)
-            idx = int(np.argmax(pred))
-            prob = float(np.max(pred))
-        st.success("✅ Hasil Klasifikasi")
-        st.write("Kelas:", idx)
-        st.write("Probabilitas:", f"{prob:.4f}")
+        st.image(uploaded_file, caption="Gambar yang diupload", use_column_width=True)
+        st.success("Model klasifikasi bisa dijalankan di sini (gunakan model.h5 kamu).")
 
-# ====== OBJECT DETECTION PAGE ======
+    if st.button("⬅️ Kembali ke Home"):
+        go_to("home")
+
+# --- Halaman DETEKSI OBJEK ---
 elif st.session_state.page == "detect":
-    st.title("🥤 Object Detection")
-    if st.button("⬅️ Kembali ke Home"):
-        goto("home")
+    st.header("🎯 Menu Deteksi Objek")
+    uploaded_file = st.file_uploader("Upload gambar untuk deteksi objek", type=["jpg", "jpeg", "png"])
 
-    if not YOLO_AVAILABLE:
-        st.error(f"YOLO tidak tersedia: {YOLO_IMPORT_ERROR}")
-    uploaded_file = st.file_uploader("Unggah gambar", type=["jpg", "jpeg", "png"])
     if uploaded_file:
-        img = Image.open(uploaded_file).convert("RGB")
-        st.image(img, caption="Gambar diunggah", use_column_width=True)
-        yolo = load_yolo_model()
-        if yolo:
-            with st.spinner("Mendeteksi..."):
-                results = yolo.predict(img, verbose=False)
-                result_img = results[0].plot()
-            st.image(result_img, caption="Hasil Deteksi", use_column_width=True)
-        else:
-            st.error("Model YOLO tidak dapat dijalankan di environment ini.")
+        st.image(uploaded_file, caption="Gambar yang diupload", use_column_width=True)
+        st.success("Model deteksi bisa dijalankan di sini (gunakan model YOLO, dll).")
+
+    if st.button("⬅️ Kembali ke Home"):
+        go_to("home")
