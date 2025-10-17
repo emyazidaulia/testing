@@ -1,4 +1,6 @@
 import streamlit as st
+import base64
+from pathlib import Path
 
 # --- Konfigurasi halaman ---
 st.set_page_config(page_title="Image Classifier", layout="wide")
@@ -11,20 +13,28 @@ if "page" not in st.session_state:
 def go_to(page_name):
     st.session_state.page = page_name
 
-# --- Fungsi untuk background slideshow (fade in/out) ---
+# --- Fungsi ubah gambar lokal jadi base64 ---
+def get_base64_image(image_path):
+    with open(image_path, "rb") as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+# --- Fungsi background slideshow dengan Base64 ---
 def set_slideshow_background(image_paths, duration=10):
     """
-    Menampilkan background slideshow dari beberapa gambar lokal.
-    - image_paths: list path gambar lokal
-    - duration: waktu total 1 siklus (detik)
+    Membuat background slideshow fade in/out dari gambar lokal
     """
+    # Konversi semua gambar ke base64
+    encoded_images = [get_base64_image(p) for p in image_paths]
+
+    # CSS tiap gambar
     images_css = ""
-    total = len(image_paths)
-    for i, img in enumerate(image_paths):
+    total = len(encoded_images)
+    for i, img in enumerate(encoded_images):
         delay = (i * (duration / total))
         images_css += f"""
         .bg-slide:nth-child({i+1}) {{
-            background-image: url("{img}");
+            background-image: url("data:image/jpeg;base64,{img}");
             animation-delay: {delay}s;
         }}
         """
@@ -64,7 +74,7 @@ def set_slideshow_background(image_paths, duration=10):
         </style>
 
         <div class="bg-slideshow">
-            {''.join('<div class="bg-slide"></div>' for _ in image_paths)}
+            {''.join('<div class="bg-slide"></div>' for _ in encoded_images)}
         </div>
         """,
         unsafe_allow_html=True
@@ -82,19 +92,14 @@ with st.sidebar:
 
 # --- Halaman HOME ---
 if st.session_state.page == "home":
-    # Path gambar lokal (sesuai folder di repo)
-    set_slideshow_background(
-        [
-            "sample_images/00000055.jpg",
-            "sample_images/00000076.jpg",
-            "sample_images/00000078.jpg",
-            "sample_images/abc016.jpg",
-        ],
-        duration=15
-    )
+    set_slideshow_background([
+        "sample_images/00000055.jpg",
+        "sample_images/00000076.jpg",
+        "sample_images/abc016.jpg"
+    ], duration=15)
 
-    st.markdown("<h1 style='text-align:center;'>Selamat Datang!</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;'>Pilih salah satu menu di bawah untuk memulai.</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;color:white;'>Selamat Datang!</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center;color:white;'>Pilih salah satu menu di bawah untuk memulai.</p>", unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
@@ -107,42 +112,34 @@ if st.session_state.page == "home":
 
 # --- Halaman KLASIFIKASI GAMBAR ---
 elif st.session_state.page == "classify":
-    set_slideshow_background(
-        [
-            "sample_images/abc017.jpg",
-            "sample_images/abc018.jpg",
-            "sample_images/00000058.png",
-        ],
-        duration=12
-    )
+    set_slideshow_background([
+        "sample_images/abc017.jpg",
+        "sample_images/abc018.jpg"
+    ], duration=12)
 
     st.header("🖼 Menu Klasifikasi Gambar")
     uploaded_file = st.file_uploader("Upload gambar untuk klasifikasi", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
         st.image(uploaded_file, caption="Gambar yang diupload", use_column_width=True)
-        st.success("Model klasifikasi dapat dijalankan di sini (gunakan model.h5 kamu).")
+        st.success("Model klasifikasi dapat dijalankan di sini.")
 
     if st.button("⬅ Kembali ke Home"):
         go_to("home")
 
 # --- Halaman DETEKSI OBJEK ---
 elif st.session_state.page == "detect":
-    set_slideshow_background(
-        [
-            "sample_images/00000055.jpg",
-            "sample_images/abc016.jpg",
-            "sample_images/abc018.jpg",
-        ],
-        duration=14
-    )
+    set_slideshow_background([
+        "sample_images/00000078.jpg",
+        "sample_images/abc016.jpg"
+    ], duration=14)
 
     st.header("🎯 Menu Deteksi Objek")
     uploaded_file = st.file_uploader("Upload gambar untuk deteksi objek", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
         st.image(uploaded_file, caption="Gambar yang diupload", use_column_width=True)
-        st.success("Model deteksi dapat dijalankan di sini (gunakan model YOLO, dll).")
+        st.success("Model deteksi dapat dijalankan di sini.")
 
     if st.button("⬅ Kembali ke Home"):
         go_to("home")
