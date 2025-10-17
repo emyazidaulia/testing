@@ -33,106 +33,103 @@ st.set_page_config(page_title="Would You Rather AI", layout="wide")
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
-# Hilangkan padding bawaan Streamlit
+# Hilangkan padding bawaan dan sembunyikan header/footer
 st.markdown("""
     <style>
-    .block-container {
-        padding-top: 0rem;
-        padding-bottom: 0rem;
-        padding-left: 0rem;
-        padding-right: 0rem;
-        margin: 0;
-    }
+    .block-container {padding: 0; margin: 0;}
     header, footer {visibility: hidden;}
+    .stApp {overflow: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
-# ============ HALAMAN HOME ============
+# ============================
+# HOME PAGE (TAMPILAN PENUH)
+# ============================
 if st.session_state.page == "home":
     st.markdown("""
         <style>
-        body {
+        html, body, [class*="css"] {
+            height: 100%;
             margin: 0;
-            padding: 0;
         }
-        .container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 2rem;
+        .full-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             height: 100vh;
-            width: 100%;
+            width: 100vw;
             margin: 0;
+            overflow: hidden;
         }
-        .box {
-            flex: 1;
-            height: 80vh;
+        .side {
             display: flex;
             justify-content: center;
             align-items: center;
-            border-radius: 25px;
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 700;
             color: white;
             text-align: center;
-            transition: all 0.25s ease;
             cursor: pointer;
+            transition: all 0.25s ease;
             position: relative;
         }
-        .red { background: linear-gradient(135deg, #ff2b2b, #ff6b6b); }
-        .blue { background: linear-gradient(135deg, #007bff, #00bfff); }
-        .box:hover {
-            transform: scale(1.04);
-            box-shadow: 0 0 25px rgba(0,0,0,0.25);
+        .side:hover {
+            transform: scale(1.03);
+            filter: brightness(1.05);
         }
-        .label {
-            z-index: 2;
-            line-height: 1.3;
+        .red {
+            background: linear-gradient(135deg, #ff2b2b, #ff6b6b);
         }
-        .overlay-button {
+        .blue {
+            background: linear-gradient(135deg, #007bff, #00bfff);
+        }
+        .side form {
+            position: absolute;
+            inset: 0;
+        }
+        .side button {
             position: absolute;
             inset: 0;
             background: transparent;
             border: none;
             cursor: pointer;
-            z-index: 3;
+            z-index: 10;
+        }
+        .label {
+            z-index: 5;
+            line-height: 1.3;
+            pointer-events: none;
         }
         </style>
-    """, unsafe_allow_html=True)
 
-    st.markdown('<div class="container">', unsafe_allow_html=True)
-
-    # Kotak merah (klasifikasi)
-    st.markdown("""
-        <form action="?page=classify" method="get">
-            <div class="box red">
-                <button class="overlay-button" type="submit"></button>
-                <div class="label">🍝 Eat uncooked pasta<br>(Image Classification)</div>
+        <div class="full-container">
+            <div class="side red">
+                <form action="?page=classify" method="get">
+                    <button type="submit"></button>
+                    <div class="label">🍝 Eat uncooked pasta<br>(Image Classification)</div>
+                </form>
             </div>
-        </form>
-    """, unsafe_allow_html=True)
-
-    # Kotak biru (deteksi)
-    st.markdown("""
-        <form action="?page=detect" method="get">
-            <div class="box blue">
-                <button class="overlay-button" type="submit"></button>
-                <div class="label">🥤 Drink salted coke<br>(Object Detection)</div>
+            <div class="side blue">
+                <form action="?page=detect" method="get">
+                    <button type="submit"></button>
+                    <div class="label">🥤 Drink salted coke<br>(Object Detection)</div>
+                </form>
             </div>
-        </form>
+        </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)
-
+    # Tangkap query parameter untuk berpindah halaman
     query_params = st.query_params
     if "page" in query_params:
         st.session_state.page = query_params["page"]
         st.experimental_rerun()
 
-# ============ HALAMAN KLASIFIKASI ============
+# ============================
+# HALAMAN KLASIFIKASI GAMBAR
+# ============================
 elif st.session_state.page == "classify":
     st.markdown('<div style="padding:2rem 5rem;">', unsafe_allow_html=True)
     st.title("🍝 Image Classification Mode")
+
     if st.button("⬅️ Kembali ke Menu Awal"):
         st.session_state.page = "home"
         st.experimental_rerun()
@@ -156,10 +153,13 @@ elif st.session_state.page == "classify":
         st.info("📁 Silakan unggah gambar terlebih dahulu.")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# ============ HALAMAN DETEKSI ============
+# ============================
+# HALAMAN DETEKSI OBJEK
+# ============================
 elif st.session_state.page == "detect":
     st.markdown('<div style="padding:2rem 5rem;">', unsafe_allow_html=True)
     st.title("🥤 Object Detection Mode (YOLO)")
+
     if st.button("⬅️ Kembali ke Menu Awal"):
         st.session_state.page = "home"
         st.experimental_rerun()
