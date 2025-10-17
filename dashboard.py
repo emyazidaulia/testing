@@ -1,3 +1,11 @@
+import os
+
+# ======== FIX agar tidak error libGL.so.1 di Streamlit Cloud ========
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
+os.environ["OPENCV_VIDEOIO_PRIORITY_MSMF"] = "0"
+os.environ["DISPLAY"] = ":0"
+# ====================================================================
+
 import streamlit as st
 from ultralytics import YOLO
 import tensorflow as tf
