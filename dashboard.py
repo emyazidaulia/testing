@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image
 import tensorflow as tf
 
-# Setup environment
+# Konfigurasi lingkungan
 os.environ["YOLO_CONFIG_DIR"] = "/tmp/Ultralytics"
 os.environ["MPLCONFIGDIR"] = "/tmp/matplotlib"
 
@@ -30,10 +30,11 @@ def load_classifier_model():
 
 st.set_page_config(page_title="Would You Rather AI", layout="wide")
 
+# State halaman
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
-# Hilangkan padding bawaan dan sembunyikan header/footer
+# Hilangkan margin/padding bawaan
 st.markdown("""
     <style>
     .block-container {padding: 0; margin: 0;}
@@ -42,8 +43,13 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Fungsi untuk berpindah halaman tanpa reload
+def change_page(new_page):
+    st.session_state.page = new_page
+    st.experimental_rerun()
+
 # ============================
-# HOME PAGE (TAMPILAN PENUH)
+# HOME PAGE (UI LAYAR PENUH)
 # ============================
 if st.session_state.page == "home":
     st.markdown("""
@@ -82,18 +88,6 @@ if st.session_state.page == "home":
         .blue {
             background: linear-gradient(135deg, #007bff, #00bfff);
         }
-        .side form {
-            position: absolute;
-            inset: 0;
-        }
-        .side button {
-            position: absolute;
-            inset: 0;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            z-index: 10;
-        }
         .label {
             z-index: 5;
             line-height: 1.3;
@@ -102,37 +96,49 @@ if st.session_state.page == "home":
         </style>
 
         <div class="full-container">
-            <div class="side red">
-                <form action="?page=classify" method="get">
-                    <button type="submit"></button>
-                    <div class="label">🍝 Eat uncooked pasta<br>(Image Classification)</div>
-                </form>
+            <div class="side red" onclick="sendMessage('classify')">
+                <div class="label">🍝 Eat uncooked pasta<br>(Image Classification)</div>
             </div>
-            <div class="side blue">
-                <form action="?page=detect" method="get">
-                    <button type="submit"></button>
-                    <div class="label">🥤 Drink salted coke<br>(Object Detection)</div>
-                </form>
+            <div class="side blue" onclick="sendMessage('detect')">
+                <div class="label">🥤 Drink salted coke<br>(Object Detection)</div>
             </div>
         </div>
+
+        <script>
+        const sendMessage = (page) => {
+            window.parent.postMessage({page: page}, "*");
+        };
+        </script>
     """, unsafe_allow_html=True)
 
-    # Tangkap query parameter untuk berpindah halaman
-    query_params = st.query_params
-    if "page" in query_params:
-        st.session_state.page = query_params["page"]
-        st.experimental_rerun()
+    # Tangkap pesan dari JS (klik kotak)
+    clicked_page = st.experimental_get_query_params().get("clicked_page", [None])[0]
+    if clicked_page:
+        change_page(clicked_page)
+
+    # JS listener agar bisa ubah state tanpa reload
+    st.markdown("""
+        <script>
+        window.addEventListener("message", (event) => {
+            const page = event.data.page;
+            if (page) {
+                const url = new URL(window.location);
+                url.searchParams.set("clicked_page", page);
+                window.location.href = url;
+            }
+        });
+        </script>
+    """, unsafe_allow_html=True)
 
 # ============================
-# HALAMAN KLASIFIKASI GAMBAR
+# KLASIFIKASI GAMBAR
 # ============================
 elif st.session_state.page == "classify":
     st.markdown('<div style="padding:2rem 5rem;">', unsafe_allow_html=True)
     st.title("🍝 Image Classification Mode")
 
     if st.button("⬅️ Kembali ke Menu Awal"):
-        st.session_state.page = "home"
-        st.experimental_rerun()
+        change_page("home")
 
     uploaded_file = st.file_uploader("Unggah gambar untuk diklasifikasi", type=["jpg", "jpeg", "png"])
     if uploaded_file:
@@ -154,15 +160,14 @@ elif st.session_state.page == "classify":
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================
-# HALAMAN DETEKSI OBJEK
+# DETEKSI OBJEK
 # ============================
 elif st.session_state.page == "detect":
     st.markdown('<div style="padding:2rem 5rem;">', unsafe_allow_html=True)
     st.title("🥤 Object Detection Mode (YOLO)")
 
     if st.button("⬅️ Kembali ke Menu Awal"):
-        st.session_state.page = "home"
-        st.experimental_rerun()
+        change_page("home")
 
     if not YOLO_AVAILABLE:
         st.error(f"⚠️ YOLO tidak tersedia di server ini ({YOLO_IMPORT_ERROR})")
