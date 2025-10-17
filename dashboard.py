@@ -18,66 +18,66 @@ with st.sidebar:
     st.button("🖼️ Klasifikasi Gambar", on_click=lambda: go_to("classify"))
     st.button("🎯 Deteksi Objek", on_click=lambda: go_to("detect"))
 
-# --- Halaman HOME ---
+# =====================================================
+#                     HALAMAN HOME
+# =====================================================
 if st.session_state.page == "home":
     st.markdown("<h1 style='text-align:center;'>Selamat Datang!</h1>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
 
-    # CSS custom: buat div bisa klik + animasi hover
+    # CSS Styling untuk kotak besar
     st.markdown("""
         <style>
-        .clickable-box {
+        .big-box {
             height: 400px;
-            border-radius: 20px;
+            border-radius: 25px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
             font-size: 28px;
             font-weight: bold;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            color: white;
+            transition: all 0.25s ease;
+            position: relative;
         }
-        .clickable-box:hover {
+        .big-box:hover {
             transform: scale(1.03);
-            box-shadow: 0px 0px 25px rgba(0,0,0,0.3);
-            cursor: pointer;
+            box-shadow: 0px 0px 30px rgba(0,0,0,0.25);
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # Kotak Merah
+    # Kotak merah
     with col1:
-        if st.button(" ", key="red_box", use_container_width=True):
+        if st.button(" ", key="goto_classify", help="Klik untuk membuka menu klasifikasi gambar", use_container_width=True):
             go_to("classify")
 
         st.markdown(
             """
-            <div class="clickable-box" 
-                 style="background-color:#ff4b4b; margin-top:-70px;"
-                 onclick="window.parent.postMessage({type: 'streamlit:setComponentValue', key: 'red_box', value: true}, '*')">
+            <div class="big-box" style="background-color:#ff4b4b; margin-top:-70px;">
                 KLASIFIKASI GAMBAR
             </div>
             """,
             unsafe_allow_html=True
         )
 
-    # Kotak Biru
+    # Kotak biru
     with col2:
-        if st.button(" ", key="blue_box", use_container_width=True):
+        if st.button(" ", key="goto_detect", help="Klik untuk membuka menu deteksi objek", use_container_width=True):
             go_to("detect")
 
         st.markdown(
             """
-            <div class="clickable-box"
-                 style="background-color:#4287f5; margin-top:-70px;"
-                 onclick="window.parent.postMessage({type: 'streamlit:setComponentValue', key: 'blue_box', value: true}, '*')">
+            <div class="big-box" style="background-color:#4287f5; margin-top:-70px;">
                 DETEKSI OBJEK
             </div>
             """,
             unsafe_allow_html=True
         )
 
-# --- Halaman KLASIFIKASI GAMBAR ---
+# =====================================================
+#            HALAMAN KLASIFIKASI GAMBAR
+# =====================================================
 elif st.session_state.page == "classify":
     st.header("🖼️ Menu Klasifikasi Gambar")
     uploaded_file = st.file_uploader("Upload gambar untuk klasifikasi", type=["jpg", "jpeg", "png"])
@@ -88,7 +88,9 @@ elif st.session_state.page == "classify":
 
     st.button("⬅️ Kembali ke Home", on_click=lambda: go_to("home"))
 
-# --- Halaman DETEKSI OBJEK ---
+# =====================================================
+#              HALAMAN DETEKSI OBJEK
+# =====================================================
 elif st.session_state.page == "detect":
     st.header("🎯 Menu Deteksi Objek")
     uploaded_file = st.file_uploader("Upload gambar untuk deteksi objek", type=["jpg", "jpeg", "png"])
