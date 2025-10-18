@@ -1,93 +1,72 @@
+import os
 import streamlit as st
-from ultralytics import YOLO
-import tensorflow as tf
-from tensorflow.keras.preprocessing import image
 import numpy as np
 from PIL import Image
+import tensorflow as tf
 
-# ==========================
-# Load Models (basecode)
-# ==========================
+# Gunakan direktori sementara agar tidak crash
+os.environ["YOLO_CONFIG_DIR"] = "/tmp/Ultralytics"
+os.environ["MPLCONFIGDIR"] = "/tmp/matplotlib"
+
+# Import YOLO dengan aman
+try:
+    from ultralytics import YOLO
+    YOLO_AVAILABLE = True
+except Exception as e:
+    st.warning(f"⚠ YOLO tidak aktif di environment ini: {e}")
+    YOLO_AVAILABLE = False
+
+
 @st.cache_resource
-def load_models():
-    yolo_model = YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt")  # Model deteksi objek
-    classifier = tf.keras.models.load_model("model/Muhammad Yazid Aulia_Laporan 2.h5")  # Model klasifikasi
-    return yolo_model, classifier
+def load_yolo_model():
+    if YOLO_AVAILABLE:
+        model = YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt")
+        model.overrides["save"] = False  # nonaktifkan penyimpanan otomatis
+        model.overrides["project"] = "/tmp"
+        return model
+    return None
 
-yolo_model, classifier = load_models()
 
-# --- Konfigurasi halaman ---
-st.set_page_config(page_title="Image Classifier & Detection", layout="wide")
+@st.cache_resource
+def load_classifier_model():
+    return tf.keras.models.load_model("model/Muhammad Yazid Aulia_Laporan 2.h5")
 
-# --- Inisialisasi session_state untuk navigasi ---
-if "page" not in st.session_state:
-    st.session_state.page = "home"
 
-# --- Fungsi navigasi ---
-def go_to(page_name):
-    st.session_state.page = page_name
+# ==========================
+# UI
+# ==========================
+st.title("🧠 Image Classification & Object Detection App")
 
-# --- Sidebar Navigasi ---
-with st.sidebar:
-    st.title("🔍 Menu Navigasi")
-    if st.button("🏠 Home"):
-        go_to("home")
-    if st.button("🖼 Klasifikasi Gambar"):
-        go_to("classify")
-    if st.button("🎯 Deteksi Objek"):
-        go_to("detect")
+menu = st.sidebar.selectbox("Pilih Mode:", ["Deteksi Objek (YOLO)", "Klasifikasi Gambar"])
+uploaded_file = st.file_uploader("Unggah Gambar", type=["jpg", "jpeg", "png"])
 
-# --- Halaman HOME ---
-if st.session_state.page == "home":
-    st.markdown("<h1 style='text-align:center;'>Selamat Datang!</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;'>Pilih salah satu menu di bawah untuk memulai.</p>", unsafe_allow_html=True)
+if uploaded_file is not None:
+    img = Image.open(uploaded_file)
+    st.image(img, caption="📸 Gambar yang Diupload", use_container_width=True)
 
-    # Layout tombol di tengah
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        st.markdown("<div style='height:100px;'></div>", unsafe_allow_html=True)  # jarak atas
-        if st.button("🖼 Buka Klasifikasi Gambar", use_container_width=True):
-            go_to("classify")
-        st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
-        if st.button("🎯 Buka Deteksi Objek", use_container_width=True):
-            go_to("detect")
+    if menu == "Deteksi Objek (YOLO)":
+        yolo_model = load_yolo_model()
+        if yolo_model:
+            with st.spinner("🔍 Sedang mendeteksi objek..."):
+                results = yolo_model.predict(img, verbose=False)
+                result_img = results[0].plot()
+                st.image(result_img, caption="Hasil Deteksi", use_container_width=True)
+        else:
+            st.error("Model YOLO tidak dapat digunakan di server ini.")
 
-# --- Halaman KLASIFIKASI GAMBAR ---
-elif st.session_state.page == "classify":
-    st.header("🖼 Menu Klasifikasi Gambar")
-    uploaded_file = st.file_uploader("Upload gambar untuk klasifikasi", type=["jpg", "jpeg", "png"])
+    elif menu == "Klasifikasi Gambar":
+        classifier = load_classifier_model()
+        with st.spinner("🧩 Sedang melakukan klasifikasi..."):
+            img_resized = img.resize((128, 128))
+            img_array = tf.keras.preprocessing.image.img_to_array(img_resized)
+            img_array = np.expand_dims(img_array, axis=0) / 255.0
 
-    if uploaded_file:
-        img = Image.open(uploaded_file)
-        st.image(img, caption="Gambar yang diupload", use_column_width=True)
+            prediction = classifier.predict(img_array)
+            class_index = np.argmax(prediction)
+            probability = np.max(prediction)
 
-        # Preprocessing dan prediksi
-        img_resized = img.resize((224, 224))
-        img_array = image.img_to_array(img_resized)
-        img_array = np.expand_dims(img_array, axis=0)
-        img_array = img_array / 255.0
-
-        prediction = classifier.predict(img_array)
-        class_index = np.argmax(prediction)
-        st.write("### Hasil Prediksi:", class_index)
-        st.write("Probabilitas:", np.max(prediction))
-
-    if st.button("⬅ Kembali ke Home"):
-        go_to("home")
-
-# --- Halaman DETEKSI OBJEK ---
-elif st.session_state.page == "detect":
-    st.header("🎯 Menu Deteksi Objek")
-    uploaded_file = st.file_uploader("Upload gambar untuk deteksi objek", type=["jpg", "jpeg", "png"])
-
-    if uploaded_file:
-        img = Image.open(uploaded_file)
-        st.image(img, caption="Gambar yang diupload", use_column_width=True)
-
-        # Deteksi objek
-        results = yolo_model(img)
-        result_img = results[0].plot()
-        st.image(result_img, caption="Hasil Deteksi", use_column_width=True)
-
-    if st.button("⬅ Kembali ke Home"):
-        go_to("home")
+            st.success("✅ Klasifikasi Berhasil!")
+            st.write("### Hasil Prediksi:", class_index)
+            st.write("### Probabilitas:", f"{probability:.4f}")
+else:
+    st.info("📁 Silakan unggah gambar terlebih dahulu.")
