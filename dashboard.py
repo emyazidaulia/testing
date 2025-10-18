@@ -9,9 +9,10 @@ from PIL import Image
 # Konfigurasi Global
 # ==========================
 
-# GANTI DENGAN NAMA KELAS SEBENARNYA SESUAI URUTAN INDEKS MODEL ANDA (Laporan 2.h5)
-# Contoh: Jika model Anda mengklasifikasikan 4 kelas.
-CLASS_NAMES = ['Kelas A', 'Kelas B', 'Kelas C', 'Kelas D'] 
+# DAFTAR NAMA KELAS DIPERBARUI:
+# Ganti dengan nama kelas Anda yang sebenarnya. 
+# Pastikan urutan indeks (0, 1, 2, ...) cocok dengan output model Anda.
+CLASS_NAMES = ['Kebakaran Hutan', 'Bukan Kebakaran Hutan'] # Sesuaikan daftar jika hanya 2 kelas
 
 # ==========================
 # Load Models (basecode)
@@ -75,7 +76,6 @@ elif st.session_state.page == "classify":
 
         if uploaded_file:
             img = Image.open(uploaded_file)
-            # PERBAIKAN WARNING: use_column_width -> use_container_width
             st.image(img, caption="Gambar yang diupload", use_container_width=True)
 
             # Preprocessing dan prediksi
@@ -90,7 +90,7 @@ elif st.session_state.page == "classify":
                 class_index = np.argmax(prediction)
                 probability = np.max(prediction)
                 
-                # Menampilkan NAMA KELAS (Perbaikan Fungsionalitas)
+                # Menampilkan NAMA KELAS 
                 if class_index < len(CLASS_NAMES):
                     predicted_class = CLASS_NAMES[class_index]
                     st.success("✅ Klasifikasi Selesai!")
@@ -113,7 +113,6 @@ elif st.session_state.page == "detect":
 
         if uploaded_file:
             img = Image.open(uploaded_file)
-            # PERBAIKAN WARNING: use_column_width -> use_container_width
             st.image(img, caption="Gambar yang diupload", use_container_width=True)
 
             # Deteksi objek
@@ -121,7 +120,6 @@ elif st.session_state.page == "detect":
                 results = yolo_model(img)
                 result_img = results[0].plot()
                 
-                # PERBAIKAN WARNING: use_column_width -> use_container_width
                 st.image(result_img, caption="Hasil Deteksi", use_container_width=True)
                 st.success("✅ Deteksi Selesai!")
 
