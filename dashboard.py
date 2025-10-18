@@ -29,44 +29,57 @@ if st.session_state.page == "home":
 
     # ------------------ Kotak Merah ------------------
     with col1:
-        st.markdown('''
-            <div style="
-                height:300px;
-                background-color:#ff4b4b;
-                border-radius:25px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                transition: all 0.25s ease;
-                padding: 20px;
-            ">
-        ''', unsafe_allow_html=True)
-
-        # Tombol interaktif di tengah kotak
-        if st.button("Buka Klasifikasi", key="btn_classify", help="Klik untuk membuka menu klasifikasi gambar"):
-            go_to("classify")
-
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Membuat container untuk kotak merah
+        with st.container():
+            st.markdown('''
+                <div style="
+                    height:300px;
+                    background-color:#ff4b4b;
+                    border-radius:25px;
+                    display:flex;
+                    flex-direction:column;
+                    align-items:center;
+                    justify-content:center;
+                    transition: all 0.25s ease;
+                    padding: 20px;
+                    margin-bottom: 20px;
+                ">
+            ''', unsafe_allow_html=True)
+            
+            # Tombol di tengah kotak
+            if st.button("Buka Klasifikasi", key="btn_classify", 
+                        help="Klik untuk membuka menu klasifikasi gambar",
+                        use_container_width=True):
+                go_to("classify")
+            
+            st.markdown('</div>', unsafe_allow_html=True)
 
     # ------------------ Kotak Biru ------------------
     with col2:
-        st.markdown('''
-            <div style="
-                height:300px;
-                background-color:#4287f5;
-                border-radius:25px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                transition: all 0.25s ease;
-                padding: 20px;
-            ">
-        ''', unsafe_allow_html=True)
-
-        if st.button("Buka Deteksi Objek", key="btn_detect", help="Klik untuk membuka menu deteksi objek"):
-            go_to("detect")
-
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Membuat container untuk kotak biru
+        with st.container():
+            st.markdown('''
+                <div style="
+                    height:300px;
+                    background-color:#4287f5;
+                    border-radius:25px;
+                    display:flex;
+                    flex-direction:column;
+                    align-items:center;
+                    justify-content:center;
+                    transition: all 0.25s ease;
+                    padding: 20px;
+                    margin-bottom: 20px;
+                ">
+            ''', unsafe_allow_html=True)
+            
+            # Tombol di tengah kotak
+            if st.button("Buka Deteksi Objek", key="btn_detect", 
+                        help="Klik untuk membuka menu deteksi objek",
+                        use_container_width=True):
+                go_to("detect")
+            
+            st.markdown('</div>', unsafe_allow_html=True)
 
 # =====================================================
 #            HALAMAN KLASIFIKASI GAMBAR
