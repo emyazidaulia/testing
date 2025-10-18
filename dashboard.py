@@ -1,28 +1,35 @@
 import streamlit as st
 
-# --- Konfigurasi halaman ---
+# --- Konfigurasi Halaman ---
 st.set_page_config(page_title="Image App", layout="wide")
 
-# --- Inisialisasi session state ---
+# --- Inisialisasi session_state ---
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
-# --- Fungsi navigasi ---
+# --- Fungsi Navigasi ---
 def go_to(page_name):
     st.session_state.page = page_name
 
+# --- Sidebar Navigasi ---
+with st.sidebar:
+    st.title("🔍 Navigasi")
+    st.button("🏠 Home", on_click=lambda: go_to("home"))
+    st.button("🖼️ Klasifikasi Gambar", on_click=lambda: go_to("classify"))
+    st.button("🎯 Deteksi Objek", on_click=lambda: go_to("detect"))
 
 # =====================================================
 #                     HALAMAN HOME
 # =====================================================
 if st.session_state.page == "home":
     st.markdown("<h1 style='text-align:center;'>Selamat Datang!</h1>", unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
 
-    # CSS styling
+    # CSS Styling untuk kotak besar
     st.markdown("""
         <style>
-        .full-box {
-            height: 450px;
+        .big-box {
+            height: 400px;
             border-radius: 25px;
             display: flex;
             align-items: center;
@@ -30,52 +37,46 @@ if st.session_state.page == "home":
             font-size: 28px;
             font-weight: bold;
             color: white;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            text-align: center;
+            transition: all 0.25s ease;
+            position: relative;
         }
-        .full-box:hover {
+        .big-box:hover {
             transform: scale(1.03);
             box-shadow: 0px 0px 30px rgba(0,0,0,0.25);
         }
         </style>
     """, unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2, gap="large")
-
     # Kotak merah
     with col1:
-        box1 = st.container()
-        with box1:
-            if st.button(" ", key="goto_classify", use_container_width=True):
-                go_to("classify")
-            st.markdown(
-                """
-                <div class="full-box" style="background-color:#ff4b4b; margin-top:-90px;">
-                    KLASIFIKASI GABAR
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+        if st.button(" ", key="goto_classify", help="Klik untuk membuka menu klasifikasi gambar", use_container_width=True):
+            go_to("classify")
+
+        st.markdown(
+            """
+            <div class="big-box" style="background-color:#ff4b4b; margin-top:-70px;">
+                KLASIFIKASI GAMBAR
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     # Kotak biru
     with col2:
-        box2 = st.container()
-        with box2:
-            if st.button(" ", key="goto_detect", use_container_width=True):
-                go_to("detect")
-            st.markdown(
-                """
-                <div class="full-box" style="background-color:#4287f5; margin-top:-90px;">
-                    DETEKSI OBJEK
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+        if st.button(" ", key="goto_detect", help="Klik untuk membuka menu deteksi objek", use_container_width=True):
+            go_to("detect")
 
+        st.markdown(
+            """
+            <div class="big-box" style="background-color:#4287f5; margin-top:-70px;">
+                DETEKSI OBJEK
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 # =====================================================
-#              HALAMAN KLASIFIKASI GAMBAR
+#            HALAMAN KLASIFIKASI GAMBAR
 # =====================================================
 elif st.session_state.page == "classify":
     st.header("🖼️ Menu Klasifikasi Gambar")
@@ -83,12 +84,12 @@ elif st.session_state.page == "classify":
 
     if uploaded_file:
         st.image(uploaded_file, caption="Gambar yang diupload", use_column_width=True)
-        st.success("Model klasifikasi siap dijalankan (gunakan model.h5 kamu).")
+        st.success("Model klasifikasi siap dijalankan di sini (gunakan model.h5 kamu).")
 
     st.button("⬅️ Kembali ke Home", on_click=lambda: go_to("home"))
 
 # =====================================================
-#                HALAMAN DETEKSI OBJEK
+#              HALAMAN DETEKSI OBJEK
 # =====================================================
 elif st.session_state.page == "detect":
     st.header("🎯 Menu Deteksi Objek")
@@ -96,6 +97,6 @@ elif st.session_state.page == "detect":
 
     if uploaded_file:
         st.image(uploaded_file, caption="Gambar yang diupload", use_column_width=True)
-        st.success("Model deteksi siap dijalankan (gunakan model YOLO, dll).")
+        st.success("Model deteksi siap dijalankan di sini (gunakan model YOLO, dll).")
 
     st.button("⬅️ Kembali ke Home", on_click=lambda: go_to("home"))
