@@ -23,49 +23,57 @@ with st.sidebar:
 # =====================================================
 if st.session_state.page == "home":
     st.markdown("<h1 style='text-align:center;'>Selamat Datang!</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;'>Pilih menu di bawah untuk memulai.</p>", unsafe_allow_html=True)
-    
+    st.markdown("<p style='text-align:center;'>Pilih salah satu menu di bawah untuk memulai.</p>", unsafe_allow_html=True)
+
     col1, col2 = st.columns(2, gap="large")
 
     # ------------------ Kotak Merah ------------------
     with col1:
-        # Tombol yang tampil seperti kotak besar
-        if st.button("KLASIFIKASI GAMBAR", key="classify_btn", 
-                     help="Klik untuk membuka menu klasifikasi gambar", 
-                     use_container_width=True):
-            go_to("classify")
-        # Styling agar tombol terlihat seperti kotak besar
-        st.markdown("""
-            <style>
-            div.stButton > button:first-child {
-                height: 300px;
-                font-size: 28px;
-                font-weight: bold;
-                background-color: #ff4b4b;
-                color: white;
-                border-radius: 25px;
-            }
-            </style>
-        """, unsafe_allow_html=True)
+        container_red = st.container()
+        with container_red:
+            # Kotak visual
+            st.markdown('''
+                <div style="
+                    height:300px;
+                    background-color:#ff4b4b;
+                    border-radius:25px;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    color:white;
+                    font-size:28px;
+                    font-weight:bold;
+                    transition: all 0.25s ease;
+                " onmouseover="">
+                    KLASIFIKASI GAMBAR
+                </div>
+            ''', unsafe_allow_html=True)
+            # Tombol overlay transparan agar klik di mana saja di kotak
+            if st.button(" ", key="classify_overlay", use_container_width=True):
+                go_to("classify")
 
     # ------------------ Kotak Biru ------------------
     with col2:
-        if st.button("DETEKSI OBJEK", key="detect_btn", 
-                     help="Klik untuk membuka menu deteksi objek", 
-                     use_container_width=True):
-            go_to("detect")
-        st.markdown("""
-            <style>
-            div.stButton > button:first-child {
-                height: 300px;
-                font-size: 28px;
-                font-weight: bold;
-                background-color: #4287f5;
-                color: white;
-                border-radius: 25px;
-            }
-            </style>
-        """, unsafe_allow_html=True)
+        container_blue = st.container()
+        with container_blue:
+            st.markdown('''
+                <div style="
+                    height:300px;
+                    background-color:#4287f5;
+                    border-radius:25px;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    color:white;
+                    font-size:28px;
+                    font-weight:bold;
+                    transition: all 0.25s ease;
+                ">
+                    DETEKSI OBJEK
+                </div>
+            ''', unsafe_allow_html=True)
+            if st.button(" ", key="detect_overlay", use_container_width=True):
+                go_to("detect")
 
 # =====================================================
 #            HALAMAN KLASIFIKASI GAMBAR
