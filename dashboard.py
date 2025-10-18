@@ -1,7 +1,23 @@
 import streamlit as st
+from ultralytics import YOLO
+import tensorflow as tf
+from tensorflow.keras.preprocessing import image
+import numpy as np
+from PIL import Image
+
+# ==========================
+# Load Models (basecode)
+# ==========================
+@st.cache_resource
+def load_models():
+    yolo_model = YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt")  # Model deteksi objek
+    classifier = tf.keras.models.load_model("model/Muhammad Yazid Aulia_Laporan 2.h5")  # Model klasifikasi
+    return yolo_model, classifier
+
+yolo_model, classifier = load_models()
 
 # --- Konfigurasi halaman ---
-st.set_page_config(page_title="Image Classifier", layout="wide")
+st.set_page_config(page_title="Image Classifier & Detection", layout="wide")
 
 # --- Inisialisasi session_state untuk navigasi ---
 if "page" not in st.session_state:
@@ -14,12 +30,11 @@ def go_to(page_name):
 # --- Sidebar Navigasi ---
 with st.sidebar:
     st.title("🔍 Menu Navigasi")
-    # Menggunakan key yang unik
-    if st.button("🏠 Home", key="sidebar_home"):
+    if st.button("🏠 Home"):
         go_to("home")
-    if st.button("🖼 Klasifikasi Gambar", key="sidebar_classify"):
+    if st.button("🖼 Klasifikasi Gambar"):
         go_to("classify")
-    if st.button("🎯 Deteksi Objek", key="sidebar_detect"):
+    if st.button("🎯 Deteksi Objek"):
         go_to("detect")
 
 # --- Halaman HOME ---
@@ -29,23 +44,12 @@ if st.session_state.page == "home":
 
     # Layout tombol di tengah
     col1, col2, col3 = st.columns([1, 1, 1])
-    
     with col2:
         st.markdown("<div style='height:100px;'></div>", unsafe_allow_html=True)  # jarak atas
-        
-        # --- Perbaikan untuk Tombol Klasifikasi ---
-        # Menggunakan st.empty() untuk menjamin tombol dimuat ulang dengan bersih
-        placeholder_classify = st.empty()
-        
-        # Tombol Klasifikasi dengan key yang sangat unik
-        if placeholder_classify.button("🖼 Buka Klasifikasi Gambar", use_container_width=True, key="home_classify_fix"):
+        if st.button("🖼 Buka Klasifikasi Gambar", use_container_width=True):
             go_to("classify")
-        
-        # Jarak
         st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
-        
-        # Tombol Deteksi (sudah berfungsi normal)
-        if st.button("🎯 Buka Deteksi Objek", use_container_width=True, key="home_detect"):
+        if st.button("🎯 Buka Deteksi Objek", use_container_width=True):
             go_to("detect")
 
 # --- Halaman KLASIFIKASI GAMBAR ---
@@ -54,10 +58,21 @@ elif st.session_state.page == "classify":
     uploaded_file = st.file_uploader("Upload gambar untuk klasifikasi", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
-        st.image(uploaded_file, caption="Gambar yang diupload", use_column_width=True)
-        st.success("Model klasifikasi dapat dijalankan di sini (gunakan model.h5 kamu).")
+        img = Image.open(uploaded_file)
+        st.image(img, caption="Gambar yang diupload", use_column_width=True)
 
-    if st.button("⬅ Kembali ke Home", key="classify_back"):
+        # Preprocessing dan prediksi
+        img_resized = img.resize((224, 224))
+        img_array = image.img_to_array(img_resized)
+        img_array = np.expand_dims(img_array, axis=0)
+        img_array = img_array / 255.0
+
+        prediction = classifier.predict(img_array)
+        class_index = np.argmax(prediction)
+        st.write("### Hasil Prediksi:", class_index)
+        st.write("Probabilitas:", np.max(prediction))
+
+    if st.button("⬅ Kembali ke Home"):
         go_to("home")
 
 # --- Halaman DETEKSI OBJEK ---
@@ -66,8 +81,13 @@ elif st.session_state.page == "detect":
     uploaded_file = st.file_uploader("Upload gambar untuk deteksi objek", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
-        st.image(uploaded_file, caption="Gambar yang diupload", use_column_width=True)
-        st.success("Model deteksi dapat dijalankan di sini (gunakan model YOLO, dll).")
+        img = Image.open(uploaded_file)
+        st.image(img, caption="Gambar yang diupload", use_column_width=True)
 
-    if st.button("⬅ Kembali ke Home", key="detect_back"):
+        # Deteksi objek
+        results = yolo_model(img)
+        result_img = results[0].plot()
+        st.image(result_img, caption="Hasil Deteksi", use_column_width=True)
+
+    if st.button("⬅ Kembali ke Home"):
         go_to("home")
