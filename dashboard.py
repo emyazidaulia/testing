@@ -37,6 +37,7 @@ if st.session_state.page == "home":
             font-size: 28px;
             font-weight: bold;
             color: white;
+            cursor: pointer;
             transition: all 0.25s ease;
             position: relative;
         }
@@ -47,56 +48,31 @@ if st.session_state.page == "home":
         </style>
     """, unsafe_allow_html=True)
 
-    # Kotak merah
+    # Kotak merah (klik → klasifikasi)
     with col1:
-        if st.button(" ", key="goto_classify", help="Klik untuk membuka menu klasifikasi gambar", use_container_width=True):
-            go_to("classify")
-
-        st.markdown(
-            """
-            <div class="big-box" style="background-color:#ff4b4b; margin-top:-70px;">
-                KLASIFIKASI GAMBAR
-            </div>
-            """,
+        if st.markdown(
+            """<div class="big-box" style="background-color:#ff4b4b;" onclick="window.parent.postMessage({func:'go_classify'}, '*')">KLASIFIKASI GAMBAR</div>""",
             unsafe_allow_html=True
-        )
+        ):
+            pass  # Kosong karena klik akan ditangani oleh JS
 
-    # Kotak biru
+    # Kotak biru (klik → deteksi)
     with col2:
-        if st.button(" ", key="goto_detect", help="Klik untuk membuka menu deteksi objek", use_container_width=True):
-            go_to("detect")
-
-        st.markdown(
-            """
-            <div class="big-box" style="background-color:#4287f5; margin-top:-70px;">
-                DETEKSI OBJEK
-            </div>
-            """,
+        if st.markdown(
+            """<div class="big-box" style="background-color:#4287f5;" onclick="window.parent.postMessage({func:'go_detect'}, '*')">DETEKSI OBJEK</div>""",
             unsafe_allow_html=True
-        )
+        ):
+            pass
 
-# =====================================================
-#            HALAMAN KLASIFIKASI GAMBAR
-# =====================================================
-elif st.session_state.page == "classify":
-    st.header("🖼️ Menu Klasifikasi Gambar")
-    uploaded_file = st.file_uploader("Upload gambar untuk klasifikasi", type=["jpg", "jpeg", "png"])
-
-    if uploaded_file:
-        st.image(uploaded_file, caption="Gambar yang diupload", use_column_width=True)
-        st.success("Model klasifikasi siap dijalankan di sini (gunakan model.h5 kamu).")
-
-    st.button("⬅️ Kembali ke Home", on_click=lambda: go_to("home"))
-
-# =====================================================
-#              HALAMAN DETEKSI OBJEK
-# =====================================================
-elif st.session_state.page == "detect":
-    st.header("🎯 Menu Deteksi Objek")
-    uploaded_file = st.file_uploader("Upload gambar untuk deteksi objek", type=["jpg", "jpeg", "png"])
-
-    if uploaded_file:
-        st.image(uploaded_file, caption="Gambar yang diupload", use_column_width=True)
-        st.success("Model deteksi siap dijalankan di sini (gunakan model YOLO, dll).")
-
-    st.button("⬅️ Kembali ke Home", on_click=lambda: go_to("home"))
+    # Tangkap postMessage dari JS
+    st.components.v1.html("""
+        <script>
+        window.addEventListener('message', (event) => {
+            if(event.data.func == 'go_classify'){
+                window.location.reload();  // reload agar Streamlit tangkap state baru
+            } else if(event.data.func == 'go_detect'){
+                window.location.reload();
+            }
+        });
+        </script>
+    """, height=0)
