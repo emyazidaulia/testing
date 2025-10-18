@@ -6,13 +6,25 @@ import numpy as np
 from PIL import Image
 
 # ==========================
+# Konfigurasi Global
+# ==========================
+
+# GANTI DENGAN NAMA KELAS SEBENARNYA SESUAI URUTAN INDEKS MODEL ANDA (Laporan 2.h5)
+# Contoh: Jika model Anda mengklasifikasikan 4 kelas.
+CLASS_NAMES = ['Kelas A', 'Kelas B', 'Kelas C', 'Kelas D'] 
+
+# ==========================
 # Load Models (basecode)
 # ==========================
 @st.cache_resource
 def load_models():
-    yolo_model = YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt")  # Model deteksi objek
-    classifier = tf.keras.models.load_model("model/Muhammad Yazid Aulia_Laporan 2.h5")  # Model klasifikasi
-    return yolo_model, classifier
+    try:
+        yolo_model = YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt")  # Model deteksi objek
+        classifier = tf.keras.models.load_model("model/Muhammad Yazid Aulia_Laporan 2.h5")  # Model klasifikasi
+        return yolo_model, classifier
+    except Exception as e:
+        st.error(f"Gagal memuat model. Pastikan file model ada di direktori 'model/'. Error: {e}")
+        return None, None
 
 yolo_model, classifier = load_models()
 
@@ -55,22 +67,37 @@ if st.session_state.page == "home":
 # --- Halaman KLASIFIKASI GAMBAR ---
 elif st.session_state.page == "classify":
     st.header("🖼 Menu Klasifikasi Gambar")
-    uploaded_file = st.file_uploader("Upload gambar untuk klasifikasi", type=["jpg", "jpeg", "png"])
+    
+    if classifier is None:
+        st.warning("Model Klasifikasi tidak dapat dimuat.")
+    else:
+        uploaded_file = st.file_uploader("Upload gambar untuk klasifikasi", type=["jpg", "jpeg", "png"])
 
-    if uploaded_file:
-        img = Image.open(uploaded_file)
-        st.image(img, caption="Gambar yang diupload", use_column_width=True)
+        if uploaded_file:
+            img = Image.open(uploaded_file)
+            # PERBAIKAN WARNING: use_column_width -> use_container_width
+            st.image(img, caption="Gambar yang diupload", use_container_width=True)
 
-        # Preprocessing dan prediksi
-        img_resized = img.resize((128, 128))
-        img_array = image.img_to_array(img_resized)
-        img_array = np.expand_dims(img_array, axis=0)
-        img_array = img_array / 255.0
+            # Preprocessing dan prediksi
+            with st.spinner('Memproses Klasifikasi...'):
+                # Ukuran disesuaikan ke 128x128
+                img_resized = img.resize((128, 128)) 
+                img_array = image.img_to_array(img_resized)
+                img_array = np.expand_dims(img_array, axis=0)
+                img_array = img_array / 255.0
 
-        prediction = classifier.predict(img_array)
-        class_index = np.argmax(prediction)
-        st.write("### Hasil Prediksi:", class_index)
-        st.write("Probabilitas:", np.max(prediction))
+                prediction = classifier.predict(img_array)
+                class_index = np.argmax(prediction)
+                probability = np.max(prediction)
+                
+                # Menampilkan NAMA KELAS (Perbaikan Fungsionalitas)
+                if class_index < len(CLASS_NAMES):
+                    predicted_class = CLASS_NAMES[class_index]
+                    st.success("✅ Klasifikasi Selesai!")
+                    st.markdown(f"### Hasil Prediksi: **{predicted_class}**")
+                    st.write(f"**Probabilitas:** {probability*100:.2f}%")
+                else:
+                    st.error("Indeks kelas tidak valid. Pastikan CLASS_NAMES sudah benar.")
 
     if st.button("⬅ Kembali ke Home"):
         go_to("home")
@@ -78,16 +105,25 @@ elif st.session_state.page == "classify":
 # --- Halaman DETEKSI OBJEK ---
 elif st.session_state.page == "detect":
     st.header("🎯 Menu Deteksi Objek")
-    uploaded_file = st.file_uploader("Upload gambar untuk deteksi objek", type=["jpg", "jpeg", "png"])
 
-    if uploaded_file:
-        img = Image.open(uploaded_file)
-        st.image(img, caption="Gambar yang diupload", use_column_width=True)
+    if yolo_model is None:
+        st.warning("Model Deteksi Objek tidak dapat dimuat.")
+    else:
+        uploaded_file = st.file_uploader("Upload gambar untuk deteksi objek", type=["jpg", "jpeg", "png"])
 
-        # Deteksi objek
-        results = yolo_model(img)
-        result_img = results[0].plot()
-        st.image(result_img, caption="Hasil Deteksi", use_column_width=True)
+        if uploaded_file:
+            img = Image.open(uploaded_file)
+            # PERBAIKAN WARNING: use_column_width -> use_container_width
+            st.image(img, caption="Gambar yang diupload", use_container_width=True)
+
+            # Deteksi objek
+            with st.spinner('Memproses Deteksi Objek...'):
+                results = yolo_model(img)
+                result_img = results[0].plot()
+                
+                # PERBAIKAN WARNING: use_column_width -> use_container_width
+                st.image(result_img, caption="Hasil Deteksi", use_container_width=True)
+                st.success("✅ Deteksi Selesai!")
 
     if st.button("⬅ Kembali ke Home"):
         go_to("home")
