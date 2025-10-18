@@ -30,11 +30,7 @@ if st.session_state.page == "home":
         if st.button("KLASIFIKASI GAMBAR", key="classify_btn", help="Klik untuk membuka menu klasifikasi gambar", use_container_width=True):
             go_to("classify")
         st.markdown(
-            """
-            <div style='height:300px; background-color:#ff4b4b; border-radius:25px; display:flex; align-items:center; justify-content:center; color:white; font-size:28px; font-weight:bold; margin-top:-70px;'>
-                KLASIFIKASI GAMBAR
-            </div>
-            """,
+            "<div style='height:300px; background-color:#ff4b4b; border-radius:25px; display:flex; align-items:center; justify-content:center; color:white; font-size:28px; font-weight:bold; margin-top:10px;'>KLASIFIKASI GAMBAR</div>",
             unsafe_allow_html=True
         )
 
@@ -43,11 +39,7 @@ if st.session_state.page == "home":
         if st.button("DETEKSI OBJEK", key="detect_btn", help="Klik untuk membuka menu deteksi objek", use_container_width=True):
             go_to("detect")
         st.markdown(
-            """
-            <div style='height:300px; background-color:#4287f5; border-radius:25px; display:flex; align-items:center; justify-content:center; color:white; font-size:28px; font-weight:bold; margin-top:-70px;'>
-                DETEKSI OBJEK
-            </div>
-            """,
+            "<div style='height:300px; background-color:#4287f5; border-radius:25px; display:flex; align-items:center; justify-content:center; color:white; font-size:28px; font-weight:bold; margin-top:10px;'>DETEKSI OBJEK</div>",
             unsafe_allow_html=True
         )
 
