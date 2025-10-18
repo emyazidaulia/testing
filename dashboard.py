@@ -29,49 +29,43 @@ if st.session_state.page == "home":
 
     # ------------------ Kotak Merah ------------------
     with col1:
-        # Tombol sebagai overlay untuk navigasi
-        if st.button("KLASIFIKASI GAMBAR", key="classify_btn", use_container_width=True):
+        # Tombol yang tampil seperti kotak besar
+        if st.button("KLASIFIKASI GAMBAR", key="classify_btn", 
+                     help="Klik untuk membuka menu klasifikasi gambar", 
+                     use_container_width=True):
             go_to("classify")
-        # Kotak visual
-        st.markdown('''
-        <div style="
-            height:300px;
-            background-color:#ff4b4b;
-            border-radius:25px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            color:white;
-            font-size:28px;
-            font-weight:bold;
-            margin-top:-60px;
-            position: relative;
-        ">
-            KLASIFIKASI GAMBAR
-        </div>
-        ''', unsafe_allow_html=True)
+        # Styling agar tombol terlihat seperti kotak besar
+        st.markdown("""
+            <style>
+            div.stButton > button:first-child {
+                height: 300px;
+                font-size: 28px;
+                font-weight: bold;
+                background-color: #ff4b4b;
+                color: white;
+                border-radius: 25px;
+            }
+            </style>
+        """, unsafe_allow_html=True)
 
     # ------------------ Kotak Biru ------------------
     with col2:
-        if st.button("DETEKSI OBJEK", key="detect_btn", use_container_width=True):
+        if st.button("DETEKSI OBJEK", key="detect_btn", 
+                     help="Klik untuk membuka menu deteksi objek", 
+                     use_container_width=True):
             go_to("detect")
-        st.markdown('''
-        <div style="
-            height:300px;
-            background-color:#4287f5;
-            border-radius:25px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            color:white;
-            font-size:28px;
-            font-weight:bold;
-            margin-top:-60px;
-            position: relative;
-        ">
-            DETEKSI OBJEK
-        </div>
-        ''', unsafe_allow_html=True)
+        st.markdown("""
+            <style>
+            div.stButton > button:first-child {
+                height: 300px;
+                font-size: 28px;
+                font-weight: bold;
+                background-color: #4287f5;
+                color: white;
+                border-radius: 25px;
+            }
+            </style>
+        """, unsafe_allow_html=True)
 
 # =====================================================
 #            HALAMAN KLASIFIKASI GAMBAR
