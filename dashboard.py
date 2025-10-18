@@ -1,4 +1,22 @@
 import streamlit as st
+import base64
+from pathlib import Path
+
+# --- Fungsi Konversi Gambar Lokal ke Base64 ---
+def get_base64_image(image_path):
+    """Mengonversi file gambar lokal ke Base64 string."""
+    try:
+        # Path relatif ke folder sample_images
+        img_path = Path(image_path)
+        with open(img_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    except FileNotFoundError:
+        st.error(f"Error: File gambar tidak ditemukan di {image_path}. Pastikan path sudah benar.")
+        return "" # Mengembalikan string kosong jika gagal
+
+# Definisikan path gambar lokal untuk hover (misal: abc016.jpg)
+IMAGE_PATH = "sample_images/abc016.jpg" 
+base64_image = get_base64_image(IMAGE_PATH)
 
 # --- Konfigurasi halaman ---
 st.set_page_config(page_title="Image Classifier", layout="wide")
@@ -26,78 +44,83 @@ if st.session_state.page == "home":
     st.markdown("<h1 style='text-align:center;'>Selamat Datang!</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center;'>Pilih salah satu menu di bawah untuk memulai.</p>", unsafe_allow_html=True)
 
-    # Menambahkan CSS untuk efek hover pada *wrapper* tombol (SOLUSI STABIL)
-    st.markdown("""
-    <style>
-    /* -------------------------------------------------------------------------- */
-    /* Gaya Umum Tombol */
-    /* -------------------------------------------------------------------------- */
-    .stButton > button {
-        height: 80px;
-        font-size: 18px;
-        font-weight: bold;
-        border: none;
-        border-radius: 10px;
-        transition: all 0.3s ease;
-        color: white; /* Pastikan teks terlihat di dark mode */
-        background-color: #764ba2; /* Warna default tombol */
-    }
-    .stButton > button:hover {
-        transform: scale(1.03);
-    }
-    
-    /* -------------------------------------------------------------------------- */
-    /* Gaya untuk Wrapper Tombol Klasifikasi */
-    /* -------------------------------------------------------------------------- */
-    /* Target div wrapper tombol menggunakan data-testid dari key="classify_btn_home" */
-    
-    div[data-testid="stKey_classify_btn_home"] {
-        position: relative;
-        overflow: hidden; /* Penting untuk mengontrol ::before */
-        border-radius: 10px; /* Cocokkan dengan tombol */
-        transition: all 0.3s ease;
-        background-color: transparent; /* Pastikan tombol di dalamnya yang mendefinisikan warna */
-        padding: 5px; /* Tambahkan sedikit padding agar efek ::before memiliki ruang */
-    }
+    # --- CSS Trik untuk Efek Hover dengan Gambar Base64 ---
+    if base64_image:
+        FIRE_IMAGE_CSS = f"""
+        <style>
+        /* -------------------------------------------------------------------------- */
+        /* Gaya Umum Tombol */
+        /* -------------------------------------------------------------------------- */
+        .stButton > button {{
+            height: 80px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            color: white; /* Pastikan teks terlihat di dark mode */
+            background-color: #764ba2; /* Warna default tombol */
+        }}
+        .stButton > button:hover {{
+            transform: scale(1.03);
+        }}
+        
+        /* -------------------------------------------------------------------------- */
+        /* Gaya untuk Wrapper Tombol Klasifikasi (Menggunakan Gambar Lokal) */
+        /* -------------------------------------------------------------------------- */
+        /* Target div wrapper tombol menggunakan data-testid dari key="classify_btn_home" */
+        
+        div[data-testid="stKey_classify_btn_home"] {{
+            position: relative;
+            overflow: hidden; 
+            border-radius: 10px; 
+            transition: all 0.3s ease;
+            background-color: transparent; 
+            padding: 5px;
+        }}
 
-    /* Pseudo-element untuk background image saat hover */
-    div[data-testid="stKey_classify_btn_home"]::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        /* GAMBAR KEBAKARAN HUTAN */
-        background-image: url('https://images.unsplash.com/photo-1542382109289-4a0b27192f16?auto=format&fit=crop&w=2000&q=80');
-        background-size: cover;
-        background-position: center;
-        opacity: 0; /* Sembunyikan secara default */
-        transition: opacity 0.5s ease;
-        z-index: 0; /* Letakkan di bawah tombol */
-        border-radius: 10px;
-    }
+        /* Pseudo-element untuk background image saat hover */
+        div[data-testid="stKey_classify_btn_home"]::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            /* GAMBAR LOKAL ABC016.JPG YANG SUDAH DI-BASE64 */
+            background-image: url("data:image/jpeg;base64,{base64_image}");
+            background-size: cover;
+            background-position: center;
+            opacity: 0; /* Sembunyikan secara default */
+            transition: opacity 0.5s ease;
+            z-index: 0; /* Letakkan di bawah tombol */
+            border-radius: 10px;
+        }}
 
-    /* Efek hover: Tampilkan background image */
-    div[data-testid="stKey_classify_btn_home"]:hover::before {
-        opacity: 0.6; /* Tampilkan dengan opacity 60% */
-    }
+        /* Efek hover: Tampilkan background image */
+        div[data-testid="stKey_classify_btn_home"]:hover::before {{
+            opacity: 0.6; /* Tampilkan dengan opacity 60% */
+        }}
 
-    /* Pastikan tombol dan teksnya berada di atas background image */
-    div[data-testid="stKey_classify_btn_home"] button {
-        position: relative;
-        z-index: 1; /* Pastikan di atas ::before */
-        background-color: rgba(118, 75, 162, 0.7) !important; /* Buat tombol agak transparan agar gambar terlihat */
-        box-shadow: 0 0 15px rgba(255, 69, 0, 0.5); /* Tambahkan shadow api */
-    }
+        /* Pastikan tombol dan teksnya berada di atas background image */
+        div[data-testid="stKey_classify_btn_home"] button {{
+            position: relative;
+            z-index: 1; /* Pastikan di atas ::before */
+            background-color: rgba(118, 75, 162, 0.7) !important; /* Buat tombol agak transparan agar gambar terlihat */
+            box-shadow: 0 0 15px rgba(255, 69, 0, 0.5); /* Tambahkan shadow api */
+        }}
 
-    /* Hapus padding div wrapper Streamlit yang tidak perlu */
-    [data-testid="stKey_classify_btn_home"] > div {
-        padding: 0 !important;
-    }
-    
-    </style>
-    """, unsafe_allow_html=True)
+        /* Hapus padding div wrapper Streamlit yang tidak perlu */
+        [data-testid="stKey_classify_btn_home"] > div {{
+            padding: 0 !important;
+        }}
+        
+        </style>
+        """
+        st.markdown(FIRE_IMAGE_CSS, unsafe_allow_html=True)
+    else:
+        st.warning("Gagal memuat gambar lokal. Efek hover mungkin tidak berfungsi.")
+
 
     # Layout tombol di tengah
     col1, col2, col3 = st.columns([1, 1, 1])
@@ -105,8 +128,7 @@ if st.session_state.page == "home":
         st.markdown("<div style='height:100px;'></div>", unsafe_allow_html=True)  # jarak atas
         
         # Tombol Klasifikasi dengan key spesifik untuk CSS
-        # Penting: Tombol harus berada di dalam wrapper div agar ::before berfungsi
-        if st.button("🔥 Buka Klasifikasi Gambar", use_container_width=True, key="classify_btn_home"):
+        if st.button("🖼 Buka Klasifikasi Gambar", use_container_width=True, key="classify_btn_home"):
             go_to("classify")
             
         st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
