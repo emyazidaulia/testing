@@ -283,4 +283,17 @@ elif st.session_state.page == "detect":
                             detected_labels.append(label)
 
                     st.markdown("---")
-                    st.image(result_img, caption="Hasil Deteksi", use_container_
+                    st.image(result_img, caption="Hasil Deteksi", use_container_width=True)
+                    st.success("✅ Deteksi Selesai!")
+
+                    if detected_labels:
+                        unique_labels = list(dict.fromkeys(detected_labels))
+                        label_text = ", ".join(unique_labels)
+                        total = len(detected_labels)
+                        st.markdown(f"### 🧩 Objek Terdeteksi: **{label_text}**")
+                        st.write(f"Jumlah total kotak objek terdeteksi: **{total}**")
+                    else:
+                        st.warning("Tidak ada objek yang terdeteksi.")
+                        
+    st.markdown("---")
+    st.button("⬅ Kembali ke Home", key="back_from_detect", on_click=go_to, args=("home",))
