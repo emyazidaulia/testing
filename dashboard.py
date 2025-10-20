@@ -11,17 +11,113 @@ from PIL import Image
 CLASS_NAMES = ['Kebakaran Hutan', 'Bukan Kebakaran Hutan']  # sesuaikan
 
 # ==========================
+# Custom CSS untuk Animated Background (Hanya di Halaman Home)
+# ==========================
+
+def set_animated_background():
+    # Link gambar yang Anda berikan
+    IMG_URLS = [
+        "https://i.imgur.com/iTMrNAj.jpeg",  # Gambar 1
+        "https://i.imgur.com/FsTtNpE.jpeg",  # Gambar 2
+        "https://i.imgur.com/DEqLHqH.gif",   # Gambar 3 (GIF)
+        "https://i.imgur.com/VwBdFtX.jpeg"   # Gambar 4
+    ]
+    
+    # Durasi total animasi. (Misal 20s, berarti 5s per gambar)
+    TOTAL_DURATION = 20
+    
+    css_animation = f"""
+    <style>
+    /* 1. Target elemen utama Streamlit */
+    .stApp {{
+        /* Warna cadangan jika gambar gagal dimuat */
+        background-color: #0e1117; 
+        background-size: cover;
+        background-attachment: fixed;
+    }}
+    
+    /* 2. Buat lapisan latar belakang yang beranimasi */
+    /* Kami hanya ingin animasi muncul di halaman 'home'. Ini sulit dilakukan
+       hanya dengan CSS, jadi kita akan membuat konten Streamlit transparan. */
+    
+    .stApp:before {{
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1; /* PENTING: Pastikan ini berada di bawah konten Streamlit */
+        animation: image-swap {TOTAL_DURATION}s infinite; 
+        background-size: cover;
+        background-position: center;
+        opacity: 0.6; /* Opacity default untuk semua gambar */
+        transition: background-image 1s ease-in-out, opacity 1s ease-in-out;
+    }}
+
+    /* Pastikan sidebar dan konten utama transparan agar background terlihat */
+    [data-testid="stSidebar"] {{
+        background: rgba(14, 17, 23, 0.85) !important; /* Semi-transparan agar mudah dibaca */
+    }}
+    [data-testid="stAppViewBlockContainer"] {{
+        background: rgba(14, 17, 23, 0.7) !important; /* Semi-transparan pada konten utama */
+        backdrop-filter: blur(2px); /* Efek blur opsional */
+        border-radius: 10px;
+        padding: 20px;
+    }}
+    [data-testid="stVerticalBlock"] {{
+        background: none !important;
+    }}
+    
+
+    /* 3. Definisi Keyframes untuk animasi fade dan swap */
+    @keyframes image-swap {{
+        /* Gambar 1 */
+        0%      {{ background-image: url('{IMG_URLS[0]}'); }}
+        20%     {{ background-image: url('{IMG_URLS[0]}'); }}
+        
+        /* Transisi ke Gambar 2 */
+        24%     {{ opacity: 0.2; }} /* Fade out cepat */
+        25%     {{ background-image: url('{IMG_URLS[1]}'); opacity: 0.6; }} /* Swap dan Fade in */
+
+        /* Gambar 2 */
+        45%     {{ background-image: url('{IMG_URLS[1]}'); }}
+        
+        /* Transisi ke Gambar 3 (GIF) */
+        49%     {{ opacity: 0.2; }}
+        50%     {{ background-image: url('{IMG_URLS[2]}'); opacity: 0.6; }}
+
+        /* Gambar 3 (GIF) */
+        70%     {{ background-image: url('{IMG_URLS[2]}'); }}
+
+        /* Transisi ke Gambar 4 */
+        74%     {{ opacity: 0.2; }}
+        75%     {{ background-image: url('{IMG_URLS[3]}'); opacity: 0.6; }}
+
+        /* Gambar 4 */
+        95%     {{ background-image: url('{IMG_URLS[3]}'); }}
+        
+        /* Transisi kembali ke Gambar 1 */
+        99%     {{ opacity: 0.2; }}
+        100%    {{ background-image: url('{IMG_URLS[0]}'); opacity: 0.6; }}
+    }}
+    </style>
+    """
+    st.markdown(css_animation, unsafe_allow_html=True)
+
+# Panggil fungsi CSS sebelum konfigurasi Streamlit
+set_animated_background()
+
+# ==========================
 # Load Models (basecode)
 # ==========================
 @st.cache_resource
 def load_models():
     try:
-        # PENTING: Pastikan jalur file model ini (model/...) sudah benar di lingkungan Anda.
         yolo_model = YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt")  # Model deteksi objek
         classifier = tf.keras.models.load_model("model/Muhammad Yazid Aulia_Laporan 2.h5")  # Model klasifikasi
         return yolo_model, classifier
     except Exception as e:
-        # Jika ada error saat memuat model, kembalikan error string
         return None, None, str(e)
 
 # Load model dan tangani error
@@ -33,7 +129,6 @@ else:
         yolo_model, classifier = models
         load_err = None
     except Exception:
-        # Tangani kasus di mana models bukan tuple 3 elemen, tapi tetap gagal unpack
         yolo_model, classifier, load_err = None, None, "Unknown error saat memuat model."
 
 # ==========================
@@ -67,12 +162,12 @@ with st.sidebar:
         st.success("✅ Model siap digunakan.")
 
 # ==========================
-# Halaman HOME (SUDAH DIPERBAIKI DENGAN st.container)
+# Halaman HOME (Sudah Diperbaiki)
 # ==========================
 if st.session_state.page == "home":
-    # Judul dan pengantar tetap menggunakan HTML untuk style
-    st.markdown("<h1 style='text-align:center; color:#FF4B4B;'>🔥 Aplikasi Analisis Kebakaran Hutan</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; font-size: 18px;'>Pilih salah satu layanan analitik di bawah untuk memulai pemrosesan gambar Anda.</p>", unsafe_allow_html=True)
+    # Judul dan pengantar 
+    st.markdown("<h1 style='text-align:center; color:#FF4B4B; text-shadow: 2px 2px 4px #000000;'>🔥 Aplikasi Analisis Kebakaran Hutan</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; font-size: 18px; color: white; text-shadow: 1px 1px 3px #000000;'>Pilih salah satu layanan analitik di bawah untuk memulai pemrosesan gambar Anda.</p>", unsafe_allow_html=True)
     
     st.markdown("---") 
 
