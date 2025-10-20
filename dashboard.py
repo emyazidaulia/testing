@@ -55,12 +55,10 @@ def go_to(page_name):
 # ==========================
 with st.sidebar:
     st.title("🔍 Menu Navigasi")
-    # Tambahkan ikon untuk mempercantik
     st.button("🏠 Home", key="nav_home", on_click=go_to, args=("home",), use_container_width=True)
     st.button("🖼 Klasifikasi Gambar", key="nav_classify", on_click=go_to, args=("classify",), use_container_width=True)
     st.button("🎯 Deteksi Objek", key="nav_detect", on_click=go_to, args=("detect",), use_container_width=True)
     
-    # Menampilkan status loading model di sidebar
     if load_err:
         st.error(f"❌ Model Error: {load_err[:50]}...")
     elif yolo_model is None or classifier is None:
@@ -69,45 +67,37 @@ with st.sidebar:
         st.success("✅ Model siap digunakan.")
 
 # ==========================
-# Halaman HOME (SUDAH DIUPGRADE)
+# Halaman HOME (SUDAH DIPERBAIKI DENGAN st.container)
 # ==========================
 if st.session_state.page == "home":
-    # Judul yang lebih spesifik dan menarik
+    # Judul dan pengantar tetap menggunakan HTML untuk style
     st.markdown("<h1 style='text-align:center; color:#FF4B4B;'>🔥 Aplikasi Analisis Kebakaran Hutan</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center; font-size: 18px;'>Pilih salah satu layanan analitik di bawah untuk memulai pemrosesan gambar Anda.</p>", unsafe_allow_html=True)
     
-    # Pemisah visual
     st.markdown("---") 
 
-    # Menggunakan 2 kolom untuk tampilan kartu yang lebih luas
     col_classify, col_detect = st.columns(2)
 
     # --- Kartu Klasifikasi ---
     with col_classify:
-        # Menggunakan sedikit HTML/CSS untuk tampilan seperti Card yang minimalis
-        st.markdown("<div style='border: 1px solid #ddd; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); height: 100%;'>", unsafe_allow_html=True)
-        st.header("🖼 Klasifikasi Gambar")
-        st.caption("Cek Tipe Gambar")
-        st.write("Sistem akan mengklasifikasikan gambar yang Anda unggah sebagai **'Kebakaran Hutan'** atau **'Bukan Kebakaran Hutan'**.")
-        st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True) # Jarak
-        st.button("➡️ Mulai Klasifikasi", key="home_open_classify_unique",
-                  on_click=go_to, args=("classify",), use_container_width=True, type="primary")
-        st.markdown("</div>", unsafe_allow_html=True)
-
+        # Menggunakan st.container(border=True) untuk efek Card yang benar
+        with st.container(border=True): 
+            st.header("🖼 Klasifikasi Gambar") 
+            st.caption("Cek Tipe Gambar")
+            st.write("Sistem akan mengklasifikasikan gambar yang Anda unggah sebagai **'Kebakaran Hutan'** atau **'Bukan Kebakaran Hutan'**.")
+            st.button("➡️ Mulai Klasifikasi", key="home_open_classify_unique",
+                      on_click=go_to, args=("classify",), use_container_width=True, type="primary")
 
     # --- Kartu Deteksi Objek ---
     with col_detect:
-        # Menggunakan sedikit HTML/CSS untuk tampilan seperti Card yang minimalis
-        st.markdown("<div style='border: 1px solid #ddd; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); height: 100%;'>", unsafe_allow_html=True)
-        st.header("🎯 Deteksi Objek")
-        st.caption("Temukan Lokasi Spesifik")
-        st.write("Sistem akan mendeteksi dan menandai **api** atau **asap** di dalam gambar, memberikan *bounding box* hasil deteksi.")
-        st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True) # Jarak
-        st.button("➡️ Mulai Deteksi Objek", key="home_open_detect_unique",
-                  on_click=go_to, args=("detect",), use_container_width=True, type="primary")
-        st.markdown("</div>", unsafe_allow_html=True)
+        # Menggunakan st.container(border=True) untuk efek Card yang benar
+        with st.container(border=True):
+            st.header("🎯 Deteksi Objek") 
+            st.caption("Temukan Lokasi Spesifik")
+            st.write("Sistem akan mendeteksi dan menandai **api** atau **asap** di dalam gambar, memberikan *bounding box* hasil deteksi.")
+            st.button("➡️ Mulai Deteksi Objek", key="home_open_detect_unique",
+                      on_click=go_to, args=("detect",), use_container_width=True, type="primary")
 
-    # Jarak
     st.markdown("<div style='height:50px;'></div>", unsafe_allow_html=True) 
 
 # ==========================
@@ -129,13 +119,11 @@ elif st.session_state.page == "classify":
 
             if st.button('Lakukan Klasifikasi', type="primary", use_container_width=True):
                 with st.spinner('Memproses Klasifikasi...'):
-                    # Proses pra-pemrosesan gambar
                     img_resized = img.resize((128, 128))
                     img_array = image.img_to_array(img_resized)
                     img_array = np.expand_dims(img_array, axis=0)
                     img_array = img_array / 255.0
 
-                    # Prediksi
                     prediction = classifier.predict(img_array)
                     class_index = np.argmax(prediction)
                     probability = np.max(prediction)
@@ -177,15 +165,10 @@ elif st.session_state.page == "detect":
 
             if st.button('Lakukan Deteksi', type="primary", use_container_width=True):
                 with st.spinner('Memproses Deteksi Objek...'):
-                    # Memanggil model YOLO
                     results = yolo_model(img)
-                    
-                    # Plot hasil pada gambar
                     result_img = results[0].plot()
 
-                    # Mengumpulkan label yang terdeteksi
                     detected_labels = []
-                    
                     if hasattr(results[0], "boxes") and results[0].boxes is not None:
                         for box in results[0].boxes:
                             try:
@@ -193,7 +176,6 @@ elif st.session_state.page == "detect":
                             except Exception:
                                 class_id = int(box.cls)
                             
-                            # Mengambil nama kelas dari model YOLO
                             label = results[0].names.get(class_id, str(class_id)) if hasattr(results[0], "names") else str(class_id)
                             detected_labels.append(label)
 
