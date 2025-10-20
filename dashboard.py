@@ -175,7 +175,7 @@ with st.sidebar:
 # ==========================
 if st.session_state.page == "home":
     # Judul dan pengantar 
-    st.markdown("<h1 style='text-align:center; color:#FFFFFF; text-shadow: 2px 2px 4px #000000;'>🔥 Analisis Gambar</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center; color:#FFFFFF; text-shadow: 2px 2px 4px #000000;'> Analisis Gambar</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center; font-size: 18px; color: white; text-shadow: 1px 1px 3px #000000;'>Pilih salah satu pilihan di bawah untuk memulai pemrosesan gambar Anda.</p>", unsafe_allow_html=True)
     
     st.markdown("---") 
