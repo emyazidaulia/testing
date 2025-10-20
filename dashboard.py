@@ -16,11 +16,12 @@ CLASS_NAMES = ['Kebakaran Hutan', 'Bukan Kebakaran Hutan']  # sesuaikan
 @st.cache_resource
 def load_models():
     try:
+        # PENTING: Pastikan jalur file model ini (model/...) sudah benar di lingkungan Anda.
         yolo_model = YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt")  # Model deteksi objek
         classifier = tf.keras.models.load_model("model/Muhammad Yazid Aulia_Laporan 2.h5")  # Model klasifikasi
         return yolo_model, classifier
     except Exception as e:
-        # Jangan panggil st.* di dalam fungsi cache_resource kalau bukan di UI
+        # Jika ada error saat memuat model, kembalikan error string
         return None, None, str(e)
 
 # Load model dan tangani error
@@ -32,6 +33,7 @@ else:
         yolo_model, classifier = models
         load_err = None
     except Exception:
+        # Tangani kasus di mana models bukan tuple 3 elemen, tapi tetap gagal unpack
         yolo_model, classifier, load_err = None, None, "Unknown error saat memuat model."
 
 # ==========================
@@ -53,25 +55,60 @@ def go_to(page_name):
 # ==========================
 with st.sidebar:
     st.title("🔍 Menu Navigasi")
-    st.button("🏠 Home", key="nav_home", on_click=go_to, args=("home",))
-    st.button("🖼 Klasifikasi Gambar", key="nav_classify", on_click=go_to, args=("classify",))
-    st.button("🎯 Deteksi Objek", key="nav_detect", on_click=go_to, args=("detect",))
+    # Tambahkan ikon untuk mempercantik
+    st.button("🏠 Home", key="nav_home", on_click=go_to, args=("home",), use_container_width=True)
+    st.button("🖼 Klasifikasi Gambar", key="nav_classify", on_click=go_to, args=("classify",), use_container_width=True)
+    st.button("🎯 Deteksi Objek", key="nav_detect", on_click=go_to, args=("detect",), use_container_width=True)
+    
+    # Menampilkan status loading model di sidebar
+    if load_err:
+        st.error(f"❌ Model Error: {load_err[:50]}...")
+    elif yolo_model is None or classifier is None:
+        st.warning("⚠️ Salah satu atau kedua model gagal dimuat.")
+    else:
+        st.success("✅ Model siap digunakan.")
 
 # ==========================
-# Halaman HOME
+# Halaman HOME (SUDAH DIUPGRADE)
 # ==========================
 if st.session_state.page == "home":
-    st.markdown("<h1 style='text-align:center;'>Selamat Datang!</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;'>Pilih salah satu menu di bawah untuk memulai.</p>", unsafe_allow_html=True)
+    # Judul yang lebih spesifik dan menarik
+    st.markdown("<h1 style='text-align:center; color:#FF4B4B;'>🔥 Aplikasi Analisis Kebakaran Hutan</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; font-size: 18px;'>Pilih salah satu layanan analitik di bawah untuk memulai pemrosesan gambar Anda.</p>", unsafe_allow_html=True)
+    
+    # Pemisah visual
+    st.markdown("---") 
 
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        st.markdown("<div style='height:100px;'></div>", unsafe_allow_html=True)
-        st.button("🖼 Buka Klasifikasi Gambar", key="home_open_classify",
-                  on_click=go_to, args=("classify",), use_container_width=True)
-        st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
-        st.button("🎯 Buka Deteksi Objek", key="home_open_detect",
-                  on_click=go_to, args=("detect",), use_container_width=True)
+    # Menggunakan 2 kolom untuk tampilan kartu yang lebih luas
+    col_classify, col_detect = st.columns(2)
+
+    # --- Kartu Klasifikasi ---
+    with col_classify:
+        # Menggunakan sedikit HTML/CSS untuk tampilan seperti Card yang minimalis
+        st.markdown("<div style='border: 1px solid #ddd; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); height: 100%;'>", unsafe_allow_html=True)
+        st.header("🖼 Klasifikasi Gambar")
+        st.caption("Cek Tipe Gambar")
+        st.write("Sistem akan mengklasifikasikan gambar yang Anda unggah sebagai **'Kebakaran Hutan'** atau **'Bukan Kebakaran Hutan'**.")
+        st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True) # Jarak
+        st.button("➡️ Mulai Klasifikasi", key="home_open_classify_unique",
+                  on_click=go_to, args=("classify",), use_container_width=True, type="primary")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+
+    # --- Kartu Deteksi Objek ---
+    with col_detect:
+        # Menggunakan sedikit HTML/CSS untuk tampilan seperti Card yang minimalis
+        st.markdown("<div style='border: 1px solid #ddd; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); height: 100%;'>", unsafe_allow_html=True)
+        st.header("🎯 Deteksi Objek")
+        st.caption("Temukan Lokasi Spesifik")
+        st.write("Sistem akan mendeteksi dan menandai **api** atau **asap** di dalam gambar, memberikan *bounding box* hasil deteksi.")
+        st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True) # Jarak
+        st.button("➡️ Mulai Deteksi Objek", key="home_open_detect_unique",
+                  on_click=go_to, args=("detect",), use_container_width=True, type="primary")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # Jarak
+    st.markdown("<div style='height:50px;'></div>", unsafe_allow_html=True) 
 
 # ==========================
 # Halaman KLASIFIKASI GAMBAR
@@ -82,7 +119,7 @@ elif st.session_state.page == "classify":
     if load_err:
         st.error(f"Gagal memuat model: {load_err}")
     elif classifier is None:
-        st.warning("Model Klasifikasi tidak dapat dimuat.")
+        st.warning("Model Klasifikasi tidak dapat dimuat. Cek jalur file model (.h5) Anda.")
     else:
         uploaded_file = st.file_uploader("Upload gambar untuk klasifikasi", type=["jpg", "jpeg", "png"])
 
@@ -90,24 +127,35 @@ elif st.session_state.page == "classify":
             img = Image.open(uploaded_file).convert("RGB")
             st.image(img, caption="Gambar yang diupload", use_container_width=True)
 
-            with st.spinner('Memproses Klasifikasi...'):
-                img_resized = img.resize((128, 128))
-                img_array = image.img_to_array(img_resized)
-                img_array = np.expand_dims(img_array, axis=0)
-                img_array = img_array / 255.0
+            if st.button('Lakukan Klasifikasi', type="primary", use_container_width=True):
+                with st.spinner('Memproses Klasifikasi...'):
+                    # Proses pra-pemrosesan gambar
+                    img_resized = img.resize((128, 128))
+                    img_array = image.img_to_array(img_resized)
+                    img_array = np.expand_dims(img_array, axis=0)
+                    img_array = img_array / 255.0
 
-                prediction = classifier.predict(img_array)
-                class_index = np.argmax(prediction)
-                probability = np.max(prediction)
+                    # Prediksi
+                    prediction = classifier.predict(img_array)
+                    class_index = np.argmax(prediction)
+                    probability = np.max(prediction)
 
-                if class_index < len(CLASS_NAMES):
-                    predicted_class = CLASS_NAMES[class_index]
-                    st.success("✅ Klasifikasi Selesai!")
-                    st.markdown(f"### Hasil Prediksi: {predicted_class}")
-                    st.write(f"Probabilitas: {probability*100:.2f}%")
-                else:
-                    st.error("Indeks kelas tidak valid. Pastikan CLASS_NAMES sudah benar.")
+                    st.markdown("---")
+                    
+                    if class_index < len(CLASS_NAMES):
+                        predicted_class = CLASS_NAMES[class_index]
+                        
+                        if predicted_class == 'Kebakaran Hutan':
+                            st.error("🔥 **[HASIL KRITIS]** Terdeteksi: Kebakaran Hutan")
+                        else:
+                            st.success("🏡 **[HASIL AMAN]** Terdeteksi: Bukan Kebakaran Hutan")
 
+                        st.markdown(f"### Kelas Prediksi: **{predicted_class}**")
+                        st.write(f"Tingkat Keyakinan: **{probability*100:.2f}%**")
+                    else:
+                        st.error("Indeks kelas tidak valid. Pastikan CLASS_NAMES sudah benar.")
+
+    st.markdown("---")
     st.button("⬅ Kembali ke Home", key="back_from_classify", on_click=go_to, args=("home",))
 
 # ==========================
@@ -119,7 +167,7 @@ elif st.session_state.page == "detect":
     if load_err:
         st.error(f"Gagal memuat model: {load_err}")
     elif yolo_model is None:
-        st.warning("Model Deteksi Objek tidak dapat dimuat.")
+        st.warning("Model Deteksi Objek tidak dapat dimuat. Cek jalur file model (.pt) Anda.")
     else:
         uploaded_file = st.file_uploader("Upload gambar untuk deteksi objek", type=["jpg", "jpeg", "png"])
 
@@ -127,30 +175,40 @@ elif st.session_state.page == "detect":
             img = Image.open(uploaded_file).convert("RGB")
             st.image(img, caption="Gambar yang diupload", use_container_width=True)
 
-            with st.spinner('Memproses Deteksi Objek...'):
-                results = yolo_model(img)
-                result_img = results[0].plot()
+            if st.button('Lakukan Deteksi', type="primary", use_container_width=True):
+                with st.spinner('Memproses Deteksi Objek...'):
+                    # Memanggil model YOLO
+                    results = yolo_model(img)
+                    
+                    # Plot hasil pada gambar
+                    result_img = results[0].plot()
 
-                detected_labels = []
-                if hasattr(results[0], "boxes") and results[0].boxes is not None:
-                    for box in results[0].boxes:
-                        try:
-                            class_id = int(box.cls[0])
-                        except Exception:
-                            class_id = int(box.cls)
-                        label = results[0].names.get(class_id, str(class_id)) if hasattr(results[0], "names") else str(class_id)
-                        detected_labels.append(label)
+                    # Mengumpulkan label yang terdeteksi
+                    detected_labels = []
+                    
+                    if hasattr(results[0], "boxes") and results[0].boxes is not None:
+                        for box in results[0].boxes:
+                            try:
+                                class_id = int(box.cls[0])
+                            except Exception:
+                                class_id = int(box.cls)
+                            
+                            # Mengambil nama kelas dari model YOLO
+                            label = results[0].names.get(class_id, str(class_id)) if hasattr(results[0], "names") else str(class_id)
+                            detected_labels.append(label)
 
-                st.image(result_img, caption="Hasil Deteksi", use_container_width=True)
-                st.success("✅ Deteksi Selesai!")
+                    st.markdown("---")
+                    st.image(result_img, caption="Hasil Deteksi", use_container_width=True)
+                    st.success("✅ Deteksi Selesai!")
 
-                if detected_labels:
-                    unique_labels = list(dict.fromkeys(detected_labels))
-                    label_text = ", ".join(unique_labels)
-                    total = len(detected_labels)
-                    st.markdown(f"### 🧩 Terdeteksi objek: *{label_text}*")
-                    st.write(f"Jumlah total objek terdeteksi: *{total}*")
-                else:
-                    st.warning("Tidak ada objek yang terdeteksi.")
-
+                    if detected_labels:
+                        unique_labels = list(dict.fromkeys(detected_labels))
+                        label_text = ", ".join(unique_labels)
+                        total = len(detected_labels)
+                        st.markdown(f"### 🧩 Objek Terdeteksi: **{label_text}**")
+                        st.write(f"Jumlah total kotak objek terdeteksi: **{total}**")
+                    else:
+                        st.warning("Tidak ada objek yang terdeteksi.")
+                        
+    st.markdown("---")
     st.button("⬅ Kembali ke Home", key="back_from_detect", on_click=go_to, args=("home",))
