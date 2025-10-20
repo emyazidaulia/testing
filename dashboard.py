@@ -9,10 +9,7 @@ from PIL import Image
 # Konfigurasi Global
 # ==========================
 
-# DAFTAR NAMA KELAS DIPERBARUI:
-# Ganti dengan nama kelas Anda yang sebenarnya. 
-# Pastikan urutan indeks (0, 1, 2, ...) cocok dengan output model Anda.
-CLASS_NAMES = ['Kebakaran Hutan', 'Bukan Kebakaran Hutan'] # Sesuaikan daftar jika hanya 2 kelas
+CLASS_NAMES = ['Kebakaran Hutan', 'Bukan Kebakaran Hutan']  # Sesuaikan daftar jika hanya 2 kelas
 
 # ==========================
 # Load Models (basecode)
@@ -50,12 +47,13 @@ with st.sidebar:
     if st.button("🎯 Deteksi Objek"):
         go_to("detect")
 
-# --- Halaman HOME ---
+# ======================================================
+#                    HALAMAN HOME
+# ======================================================
 if st.session_state.page == "home":
     st.markdown("<h1 style='text-align:center;'>Selamat Datang!</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center;'>Pilih salah satu menu di bawah untuk memulai.</p>", unsafe_allow_html=True)
 
-    # Layout tombol di tengah
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
         st.markdown("<div style='height:100px;'></div>", unsafe_allow_html=True)  # jarak atas
@@ -65,7 +63,9 @@ if st.session_state.page == "home":
         if st.button("🎯 Buka Deteksi Objek", use_container_width=True):
             go_to("detect")
 
-# --- Halaman KLASIFIKASI GAMBAR ---
+# ======================================================
+#            HALAMAN KLASIFIKASI GAMBAR
+# ======================================================
 elif st.session_state.page == "classify":
     st.header("🖼 Menu Klasifikasi Gambar")
     
@@ -80,7 +80,6 @@ elif st.session_state.page == "classify":
 
             # Preprocessing dan prediksi
             with st.spinner('Memproses Klasifikasi...'):
-                # Ukuran disesuaikan ke 128x128
                 img_resized = img.resize((128, 128)) 
                 img_array = image.img_to_array(img_resized)
                 img_array = np.expand_dims(img_array, axis=0)
@@ -90,7 +89,6 @@ elif st.session_state.page == "classify":
                 class_index = np.argmax(prediction)
                 probability = np.max(prediction)
                 
-                # Menampilkan NAMA KELAS 
                 if class_index < len(CLASS_NAMES):
                     predicted_class = CLASS_NAMES[class_index]
                     st.success("✅ Klasifikasi Selesai!")
@@ -102,7 +100,9 @@ elif st.session_state.page == "classify":
     if st.button("⬅ Kembali ke Home"):
         go_to("home")
 
-# --- Halaman DETEKSI OBJEK ---
+# ======================================================
+#              HALAMAN DETEKSI OBJEK
+# ======================================================
 elif st.session_state.page == "detect":
     st.header("🎯 Menu Deteksi Objek")
 
@@ -113,15 +113,31 @@ elif st.session_state.page == "detect":
 
         if uploaded_file:
             img = Image.open(uploaded_file)
-            st.image(img, caption="Gambar yang diupload", use_container_width=True)
+            st.image(img, caption="Gambar yang diupload", use_column_width=True)
 
             # Deteksi objek
             with st.spinner('Memproses Deteksi Objek...'):
                 results = yolo_model(img)
                 result_img = results[0].plot()
-                
-                st.image(result_img, caption="Hasil Deteksi", use_container_width=True)
+
+                # Ambil daftar label deteksi
+                detected_labels = []
+                for box in results[0].boxes:
+                    class_id = int(box.cls[0])
+                    label = results[0].names[class_id]
+                    detected_labels.append(label)
+
+                # Tampilkan hasil gambar
+                st.image(result_img, caption="Hasil Deteksi", use_column_width=True)
                 st.success("✅ Deteksi Selesai!")
+
+                # Tampilkan hasil teks di bawah gambar
+                if detected_labels:
+                    unique_labels = list(set(detected_labels))
+                    label_text = ", ".join(unique_labels)
+                    st.markdown(f"### 🧩 Terdeteksi bidak catur: **{label_text}**")
+                else:
+                    st.warning("Tidak ada objek yang terdeteksi.")
 
     if st.button("⬅ Kembali ke Home"):
         go_to("home")
