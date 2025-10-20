@@ -61,89 +61,17 @@ with st.sidebar:
 # Halaman HOME
 # ==========================
 if st.session_state.page == "home":
-    # CSS kustom untuk tampilan modern
-    st.markdown("""
-        <style>
-        .main {
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-            color: white;
-        }
-        .title {
-            text-align: center;
-            font-size: 3em;
-            font-weight: bold;
-            margin-top: 30px;
-            color: #ffffff;
-        }
-        .subtitle {
-            text-align: center;
-            font-size: 1.2em;
-            color: #dcdcdc;
-            margin-bottom: 40px;
-        }
-        .menu-container {
-            display: flex;
-            justify-content: center;
-            gap: 50px;
-            flex-wrap: wrap;
-        }
-        .menu-card {
-            background-color: #ff4b4b;
-            width: 320px;
-            height: 220px;
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 1.5em;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-            transition: all 0.3s ease;
-        }
-        .menu-card:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 25px rgba(255,255,255,0.2);
-        }
-        .blue {
-            background-color: #3b82f6;
-        }
-        .footer {
-            text-align: center;
-            font-size: 0.9em;
-            color: #ccc;
-            margin-top: 60px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;'>Selamat Datang!</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center;'>Pilih salah satu menu di bawah untuk memulai.</p>", unsafe_allow_html=True)
 
-    # Konten utama
-    st.markdown("<div class='title'>🔥 Selamat Datang di Aplikasi Deteksi Gambar</div>", unsafe_allow_html=True)
-    st.markdown("<div class='subtitle'>Pilih salah satu menu di bawah untuk memulai analisis gambar Anda.</div>", unsafe_allow_html=True)
-
-    # Menu interaktif
-    st.markdown("""
-        <div class='menu-container'>
-            <div class='menu-card' onclick="window.parent.location.href='?nav=classify'">🖼️<br>Klasifikasi Gambar</div>
-            <div class='menu-card blue' onclick="window.parent.location.href='?nav=detect'">🎯<br>Deteksi Objek</div>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # Footer
-    st.markdown("<div class='footer'>Dibuat dengan ❤️ menggunakan Streamlit | Versi 2.0</div>", unsafe_allow_html=True)
-
-    # --- Navigasi event handler ---
-    # Streamlit tidak otomatis tangkap onclick JS, jadi tambahkan tombol tersembunyi sebagai fallback
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        st.markdown("<div style='height:30px;'></div>", unsafe_allow_html=True)
-        if st.button("🖼 Buka Klasifikasi (opsi alternatif)", use_container_width=True):
-            go_to("classify")
-        if st.button("🎯 Buka Deteksi Objek (opsi alternatif)", use_container_width=True):
-            go_to("detect")
-
+        st.markdown("<div style='height:100px;'></div>", unsafe_allow_html=True)
+        st.button("🖼 Buka Klasifikasi Gambar", key="home_open_classify",
+                  on_click=go_to, args=("classify",), use_container_width=True)
+        st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
+        st.button("🎯 Buka Deteksi Objek", key="home_open_detect",
+                  on_click=go_to, args=("detect",), use_container_width=True)
 
 # ==========================
 # Halaman KLASIFIKASI GAMBAR
@@ -175,8 +103,8 @@ elif st.session_state.page == "classify":
                 if class_index < len(CLASS_NAMES):
                     predicted_class = CLASS_NAMES[class_index]
                     st.success("✅ Klasifikasi Selesai!")
-                    st.markdown(f"### Hasil Prediksi: *{predicted_class}*")
-                    st.write(f"*Probabilitas:* {probability*100:.2f}%")
+                    st.markdown(f"### Hasil Prediksi: {predicted_class}")
+                    st.write(f"Probabilitas: {probability*100:.2f}%")
                 else:
                     st.error("Indeks kelas tidak valid. Pastikan CLASS_NAMES sudah benar.")
 
@@ -220,8 +148,8 @@ elif st.session_state.page == "detect":
                     unique_labels = list(dict.fromkeys(detected_labels))
                     label_text = ", ".join(unique_labels)
                     total = len(detected_labels)
-                    st.markdown(f"### 🧩 Terdeteksi objek: **{label_text}**")
-                    st.write(f"Jumlah total objek terdeteksi: **{total}**")
+                    st.markdown(f"### 🧩 Terdeteksi objek: *{label_text}*")
+                    st.write(f"Jumlah total objek terdeteksi: *{total}*")
                 else:
                     st.warning("Tidak ada objek yang terdeteksi.")
 
