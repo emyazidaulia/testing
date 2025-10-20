@@ -175,8 +175,8 @@ with st.sidebar:
 # ==========================
 if st.session_state.page == "home":
     # Judul dan pengantar 
-    st.markdown("<h1 style='text-align:center; color:#FF4B4B; text-shadow: 2px 2px 4px #000000;'>🔥 Aplikasi Analisis Kebakaran Hutan</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; font-size: 18px; color: white; text-shadow: 1px 1px 3px #000000;'>Pilih salah satu layanan analitik di bawah untuk memulai pemrosesan gambar Anda.</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center; color:#FFFFFF; text-shadow: 2px 2px 4px #000000;'>🔥 Analisis Gambar</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; font-size: 18px; color: white; text-shadow: 1px 1px 3px #000000;'>Pilih salah satu pilihan di bawah untuk memulai pemrosesan gambar Anda.</p>", unsafe_allow_html=True)
     
     st.markdown("---") 
 
@@ -185,7 +185,7 @@ if st.session_state.page == "home":
     # --- Kartu Klasifikasi ---
     with col_classify:
         with st.container(border=True): 
-            st.header("🖼 Klasifikasi Gambar") 
+            st.header("🔥 Klasifikasi Gambar Hutan") 
             st.caption("Cek Tipe Gambar")
             st.write("Sistem akan mengklasifikasikan gambar yang Anda unggah sebagai **'Kebakaran Hutan'** atau **'Bukan Kebakaran Hutan'**.")
             st.button("➡️ Mulai Klasifikasi", key="home_open_classify_unique",
@@ -194,9 +194,9 @@ if st.session_state.page == "home":
     # --- Kartu Deteksi Objek ---
     with col_detect:
         with st.container(border=True):
-            st.header("🎯 Deteksi Objek") 
+            st.header("♞ Deteksi Bidak Catur") 
             st.caption("Temukan Lokasi Spesifik")
-            st.write("Sistem akan mendeteksi dan menandai **api** atau **asap** di dalam gambar, memberikan *bounding box* hasil deteksi.")
+            st.write("Sistem akan mendeteksi dan menandai bidak catur di dalam gambar, memberikan *bounding box* hasil deteksi.")
             # Tombol ini secara default bertipe 'secondary' sehingga akan mengikuti style CSS biru tua di atas
             st.button("➡️ Mulai Deteksi Objek", key="home_open_detect_unique",
                       on_click=go_to, args=("detect",), use_container_width=True) 
