@@ -11,7 +11,7 @@ from PIL import Image
 CLASS_NAMES = ['Kebakaran Hutan', 'Bukan Kebakaran Hutan']  # sesuaikan
 
 # ==========================
-# Custom CSS untuk Animated Background (Hanya di Halaman Home)
+# Custom CSS untuk Animated Background (DIPERBAIKI)
 # ==========================
 
 def set_animated_background():
@@ -23,23 +23,20 @@ def set_animated_background():
         "https://i.imgur.com/VwBdFtX.jpeg"   # Gambar 4
     ]
     
-    # Durasi total animasi. (Misal 20s, berarti 5s per gambar)
     TOTAL_DURATION = 20
     
     css_animation = f"""
     <style>
-    /* 1. Target elemen utama Streamlit */
-    .stApp {{
-        /* Warna cadangan jika gambar gagal dimuat */
-        background-color: #0e1117; 
-        background-size: cover;
-        background-attachment: fixed;
+    /* 1. MENGATASI LATAR BELAKANG STREAMLIT BAWAAN */
+    /* Menghapus latar belakang bawaan dari elemen root (body dan stApp) */
+    .main {{
+        background: none !important;
     }}
-    
-    /* 2. Buat lapisan latar belakang yang beranimasi */
-    /* Kami hanya ingin animasi muncul di halaman 'home'. Ini sulit dilakukan
-       hanya dengan CSS, jadi kita akan membuat konten Streamlit transparan. */
-    
+    .stApp {{
+        background: none !important;
+    }}
+
+    /* 2. MEMBUAT LAPISAN LATAR BELAKANG BERANIMASI PADA LEVEL ROOT */
     .stApp:before {{
         content: '';
         position: fixed;
@@ -47,59 +44,56 @@ def set_animated_background():
         left: 0;
         width: 100%;
         height: 100%;
-        z-index: -1; /* PENTING: Pastikan ini berada di bawah konten Streamlit */
+        z-index: -1; /* Jauh di belakang semua konten */
         animation: image-swap {TOTAL_DURATION}s infinite; 
         background-size: cover;
         background-position: center;
-        opacity: 0.6; /* Opacity default untuk semua gambar */
+        opacity: 0.5; /* Opacity rendah agar konten mudah dibaca */
         transition: background-image 1s ease-in-out, opacity 1s ease-in-out;
     }}
 
-    /* Pastikan sidebar dan konten utama transparan agar background terlihat */
-    [data-testid="stSidebar"] {{
-        background: rgba(14, 17, 23, 0.85) !important; /* Semi-transparan agar mudah dibaca */
-    }}
+    /* 3. MEMASTIKAN KONTEN UTAMA CUKUP TRANSPARAN */
+    /* Konten utama: Hapus background bawaan Streamlit (hitam/putih) */
     [data-testid="stAppViewBlockContainer"] {{
-        background: rgba(14, 17, 23, 0.7) !important; /* Semi-transparan pada konten utama */
+        background: rgba(14, 17, 23, 0.7) !important; /* Semi-transparan */
         backdrop-filter: blur(2px); /* Efek blur opsional */
         border-radius: 10px;
-        padding: 20px;
     }}
-    [data-testid="stVerticalBlock"] {{
-        background: none !important;
+    /* Sidebar: Set semi-transparan */
+    [data-testid="stSidebar"] {{
+        background: rgba(14, 17, 23, 0.9) !important; 
     }}
     
-
-    /* 3. Definisi Keyframes untuk animasi fade dan swap */
+    /* 4. DEFINISI KEYFRAMES UNTUK ANIMASI */
     @keyframes image-swap {{
         /* Gambar 1 */
         0%      {{ background-image: url('{IMG_URLS[0]}'); }}
         20%     {{ background-image: url('{IMG_URLS[0]}'); }}
         
         /* Transisi ke Gambar 2 */
-        24%     {{ opacity: 0.2; }} /* Fade out cepat */
-        25%     {{ background-image: url('{IMG_URLS[1]}'); opacity: 0.6; }} /* Swap dan Fade in */
+        24%     {{ opacity: 0.2; }}
+        25%     {{ background-image: url('{IMG_URLS[1]}'); opacity: 0.5; }}
 
         /* Gambar 2 */
         45%     {{ background-image: url('{IMG_URLS[1]}'); }}
         
         /* Transisi ke Gambar 3 (GIF) */
         49%     {{ opacity: 0.2; }}
-        50%     {{ background-image: url('{IMG_URLS[2]}'); opacity: 0.6; }}
+        50%     {{ background-image: url('{IMG_URLS[2]}'); opacity: 0.5; }}
 
         /* Gambar 3 (GIF) */
         70%     {{ background-image: url('{IMG_URLS[2]}'); }}
 
         /* Transisi ke Gambar 4 */
         74%     {{ opacity: 0.2; }}
-        75%     {{ background-image: url('{IMG_URLS[3]}'); opacity: 0.6; }}
+        75%     {{ background-image: url('{IMG_URLS[3]}'); opacity: 0.5; }}
 
         /* Gambar 4 */
         95%     {{ background-image: url('{IMG_URLS[3]}'); }}
         
         /* Transisi kembali ke Gambar 1 */
         99%     {{ opacity: 0.2; }}
-        100%    {{ background-image: url('{IMG_URLS[0]}'); opacity: 0.6; }}
+        100%    {{ background-image: url('{IMG_URLS[0]}'); opacity: 0.5; }}
     }}
     </style>
     """
@@ -175,7 +169,6 @@ if st.session_state.page == "home":
 
     # --- Kartu Klasifikasi ---
     with col_classify:
-        # Menggunakan st.container(border=True) untuk efek Card yang benar
         with st.container(border=True): 
             st.header("🖼 Klasifikasi Gambar") 
             st.caption("Cek Tipe Gambar")
@@ -185,7 +178,6 @@ if st.session_state.page == "home":
 
     # --- Kartu Deteksi Objek ---
     with col_detect:
-        # Menggunakan st.container(border=True) untuk efek Card yang benar
         with st.container(border=True):
             st.header("🎯 Deteksi Objek") 
             st.caption("Temukan Lokasi Spesifik")
