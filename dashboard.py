@@ -28,7 +28,6 @@ def set_animated_background():
     css_animation = f"""
     <style>
     /* 1. MENGATASI LATAR BELAKANG STREAMLIT BAWAAN */
-    /* Menghapus latar belakang bawaan dari elemen root (body dan stApp) */
     .main {{
         background: none !important;
     }}
@@ -44,27 +43,42 @@ def set_animated_background():
         left: 0;
         width: 100%;
         height: 100%;
-        z-index: -1; /* Jauh di belakang semua konten */
+        z-index: -1; 
         animation: image-swap {TOTAL_DURATION}s infinite; 
         background-size: cover;
         background-position: center;
-        opacity: 0.5; /* Opacity rendah agar konten mudah dibaca */
+        opacity: 0.5; 
         transition: background-image 1s ease-in-out, opacity 1s ease-in-out;
     }}
 
     /* 3. MEMASTIKAN KONTEN UTAMA CUKUP TRANSPARAN */
-    /* Konten utama: Hapus background bawaan Streamlit (hitam/putih) */
     [data-testid="stAppViewBlockContainer"] {{
-        background: rgba(14, 17, 23, 0.7) !important; /* Semi-transparan */
-        backdrop-filter: blur(2px); /* Efek blur opsional */
+        background: rgba(14, 17, 23, 0.7) !important; 
+        backdrop-filter: blur(2px); 
         border-radius: 10px;
     }}
-    /* Sidebar: Set semi-transparan */
     [data-testid="stSidebar"] {{
         background: rgba(14, 17, 23, 0.9) !important; 
     }}
     
-    /* 4. DEFINISI KEYFRAMES UNTUK ANIMASI */
+    /* ======================================= */
+    /* 4. PERBAIKAN WARNA TOMBOL KHUSUS */
+    /* Menargetkan tombol sekunder/default Streamlit dan mengubahnya menjadi biru tua */
+    
+    /* Selector ini menargetkan tombol yang tidak bertipe primary. */
+    .stApp button[kind="secondary"] {{
+        background-color: #003366 !important; /* Biru Tua */
+        color: white !important;
+        border-color: #003366 !important;
+    }}
+
+    /* Jika Anda ingin tombol sidebar (Home, Klasifikasi, Deteksi) tetap default, 
+       kita harus menargetkan tombol di luar sidebar (yang juga bertipe secondary)
+       menggunakan parent container, tetapi metode di atas biasanya cukup untuk 
+       tombol di body utama. Tombol di sidebar akan ikut berubah. */
+    /* ======================================= */
+
+    /* 5. DEFINISI KEYFRAMES UNTUK ANIMASI */
     @keyframes image-swap {{
         /* Gambar 1 */
         0%      {{ background-image: url('{IMG_URLS[0]}'); }}
@@ -108,8 +122,8 @@ set_animated_background()
 @st.cache_resource
 def load_models():
     try:
-        yolo_model = YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt")  # Model deteksi objek
-        classifier = tf.keras.models.load_model("model/Muhammad Yazid Aulia_Laporan 2.h5")  # Model klasifikasi
+        yolo_model = YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt") 
+        classifier = tf.keras.models.load_model("model/Muhammad Yazid Aulia_Laporan 2.h5") 
         return yolo_model, classifier
     except Exception as e:
         return None, None, str(e)
@@ -128,6 +142,7 @@ else:
 # ==========================
 # Konfigurasi Halaman
 # ==========================
+# st.set_page_config harus dipanggil setelah st.markdown(css)
 st.set_page_config(page_title="Image Classifier & Detection", layout="wide")
 
 # ==========================
@@ -156,7 +171,7 @@ with st.sidebar:
         st.success("✅ Model siap digunakan.")
 
 # ==========================
-# Halaman HOME (Sudah Diperbaiki)
+# Halaman HOME 
 # ==========================
 if st.session_state.page == "home":
     # Judul dan pengantar 
@@ -182,8 +197,9 @@ if st.session_state.page == "home":
             st.header("🎯 Deteksi Objek") 
             st.caption("Temukan Lokasi Spesifik")
             st.write("Sistem akan mendeteksi dan menandai **api** atau **asap** di dalam gambar, memberikan *bounding box* hasil deteksi.")
+            # Tombol ini secara default bertipe 'secondary' sehingga akan mengikuti style CSS biru tua di atas
             st.button("➡️ Mulai Deteksi Objek", key="home_open_detect_unique",
-                      on_click=go_to, args=("detect",), use_container_width=True, type="primary")
+                      on_click=go_to, args=("detect",), use_container_width=True) 
 
     st.markdown("<div style='height:50px;'></div>", unsafe_allow_html=True) 
 
@@ -267,17 +283,4 @@ elif st.session_state.page == "detect":
                             detected_labels.append(label)
 
                     st.markdown("---")
-                    st.image(result_img, caption="Hasil Deteksi", use_container_width=True)
-                    st.success("✅ Deteksi Selesai!")
-
-                    if detected_labels:
-                        unique_labels = list(dict.fromkeys(detected_labels))
-                        label_text = ", ".join(unique_labels)
-                        total = len(detected_labels)
-                        st.markdown(f"### 🧩 Objek Terdeteksi: **{label_text}**")
-                        st.write(f"Jumlah total kotak objek terdeteksi: **{total}**")
-                    else:
-                        st.warning("Tidak ada objek yang terdeteksi.")
-                        
-    st.markdown("---")
-    st.button("⬅ Kembali ke Home", key="back_from_detect", on_click=go_to, args=("home",))
+                    st.image(result_img, caption="Hasil Deteksi", use_container_
