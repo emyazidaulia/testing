@@ -17,9 +17,10 @@ IMG_URLS_HOME = [
     "https://i.imgur.com/VwBdFtX.jpeg"
 ]
 TOTAL_DURATION = 20
+IMAGE_COUNT = 5 # Jumlah gambar kecil yang akan bergerak
 
 # =======================================================
-# 1. FUNGSI STYLE CSS GLOBAL (Sekarang hanya berisi definisi style)
+# 1. FUNGSI STYLE CSS GLOBAL (Diperbarui untuk Multiple Objects)
 # =======================================================
 def set_global_styles():
     css_global = f"""
@@ -60,14 +61,21 @@ def set_global_styles():
         100% {{ background-image: url('{IMG_URLS_HOME[0]}'); opacity: 0.5; }}
     }}
 
-    /* KEYFRAMES UNTUK DETECT BG (Gambar PNG bergerak) */
+    /* KEYFRAMES PERGERAKAN HORIZONTAL (Kiri ke Kanan) */
     @keyframes move-and-fade {{ 
-        0% {{ transform: translateX(-10%) translateY(10%) scale(0.9) rotate(-2deg); opacity: 0.2; }} 
-        50% {{ transform: translateX(10%) translateY(50%) scale(1.1) rotate(2deg); opacity: 0.4; }} 
-        100% {{ transform: translateX(-10%) translateY(10%) scale(0.9) rotate(-2deg); opacity: 0.2; }} 
+        /* Mulai dari luar kiri */
+        0% {{ 
+            transform: translateX(-100%) scale(1); 
+            opacity: 0.2;
+        }} 
+        /* Bergerak ke luar kanan */
+        100% {{ 
+            transform: translateX(100vw) scale(1.1); 
+            opacity: 0.4; 
+        }} 
     }}
 
-    /* Style untuk Latar Belakang Home (Menggunakan selector yang lebih umum) */
+    /* Style untuk Latar Belakang Home */
     .home-bg-layer {{
         position: fixed;
         top: 0; left: 0;
@@ -79,23 +87,25 @@ def set_global_styles():
         animation: image-swap {TOTAL_DURATION}s infinite;
     }}
     
-    /* Style untuk Gambar Deteksi (Gambar PNG yang bergerak) */
+    /* Style untuk Container Gambar Deteksi */
     .detect-img-layer {{
         position: fixed;
         top: 0; left: 0;
         width: 100%; height: 100%;
-        z-index: -2; /* Sangat jauh di belakang */
+        z-index: -2; 
         pointer-events: none;
-    }}
-    .detect-img-layer img {{
-        width: 300px; /* Ukuran yang cukup besar */
-        position: absolute;
-        top: 0; left: 0;
-        opacity: 0.25; 
-        animation: move-and-fade 15s ease-in-out infinite alternate;
-        filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+        overflow: hidden; /* Penting agar gambar yang keluar dari layar tidak menyebabkan scrollbar */
     }}
     
+    /* Style untuk Setiap Gambar */
+    .detect-img-layer img {{
+        width: 100px; /* Ukuran yang lebih kecil untuk banyak objek */
+        position: absolute;
+        opacity: 0.25; 
+        animation: move-and-fade 25s linear infinite; /* Durasi lebih lama, animasi linear */
+        filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
+    }}
+
     </style>
     """
     st.markdown(css_global, unsafe_allow_html=True)
@@ -109,23 +119,43 @@ set_global_styles()
 # =======================================================
 def render_background_layer(page):
     if page == "home":
-        # Gunakan layer CSS background image swap di halaman Home
         st.markdown(f'<div class="home-bg-layer"></div>', unsafe_allow_html=True)
     elif page == "detect":
-        # Gunakan layer gambar HTML bergerak di halaman Deteksi
+        # --- GENERATE MULTIPLE MOVING IMAGES ---
+        images_html = ""
+        # Loop untuk membuat 5 gambar dengan posisi Y (atas/bawah) dan delay yang berbeda
+        for i in range(IMAGE_COUNT):
+            # Posisi vertikal acak (disederhanakan untuk penempatan yang jelas)
+            top_percent = 10 + (i * 15) % 80 
+            # Durasi animasi yang sedikit berbeda
+            duration = 25 + (i * 2) 
+            # Delay untuk memastikan tidak bergerak bersamaan
+            delay = i * 5 
+            
+            images_html += f"""
+            <img 
+                src="{PNG_URL_DETECT}" 
+                alt="Moving Object {i+1}" 
+                style="
+                    top: {top_percent}%; 
+                    animation-duration: {duration}s;
+                    animation-delay: {delay}s;
+                "
+            >
+            """
+        
         st.markdown(f"""
         <div class="detect-img-layer">
-            <img src="{PNG_URL_DETECT}" alt="Moving Object">
+            {images_html}
         </div>
         """, unsafe_allow_html=True)
-        # Tambahkan layer gelap tambahan agar konten lebih jelas (opsional)
+        # Tambahkan layer gelap tambahan agar konten lebih jelas
         st.markdown('<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.2); z-index: -3;"></div>', unsafe_allow_html=True)
 
 
 # ==========================
 # Load Models (basecode)
 # ==========================
-# (Tidak ada perubahan pada logika loading model)
 @st.cache_resource
 def load_models():
     try:
