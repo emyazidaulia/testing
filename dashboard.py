@@ -255,6 +255,58 @@ elif st.session_state.page == "classify":
 elif st.session_state.page == "detect":
     st.header("🎯 Menu Deteksi Objek")
 
+    # =====================================
+# Animasi Bidak Catur Bergerak di Latar
+# =====================================
+st.markdown("""
+<style>
+/* Lapisan khusus untuk animasi */
+.chess-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: -2;
+    pointer-events: none;
+}
+
+/* Bidak catur melayang */
+.piece {
+    position: absolute;
+    width: 60px;
+    opacity: 0.35;
+    animation: floatPiece linear infinite;
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.3));
+}
+
+/* Animasi pergerakan lembut bidak */
+@keyframes floatPiece {
+    0% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-25px) rotate(10deg); }
+    100% { transform: translateY(0px) rotate(0deg); }
+}
+
+/* Gerakan horizontal bergantian */
+@keyframes moveAcross {
+    0% { left: -10%; }
+    100% { left: 110%; }
+}
+</style>
+
+<!-- Tambahkan 6 bidak catur melayang -->
+<div class="chess-bg">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Chess_Piece_-_King_White.svg" class="piece" style="top: 10%; animation-duration: 25s; animation-name: moveAcross, floatPiece; animation-iteration-count: infinite, infinite; animation-timing-function: linear, ease-in-out;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_Piece_-_Queen_Black.svg" class="piece" style="top: 30%; animation-duration: 30s; animation-name: moveAcross, floatPiece; animation-delay: 5s;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/f/f1/Chess_Piece_-_Rook_White.svg" class="piece" style="top: 50%; animation-duration: 28s; animation-name: moveAcross, floatPiece; animation-delay: 8s;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/2/28/Chess_Piece_-_Bishop_Black.svg" class="piece" style="top: 65%; animation-duration: 22s; animation-name: moveAcross, floatPiece; animation-delay: 2s;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_Piece_-_Knight_White.svg" class="piece" style="top: 80%; animation-duration: 32s; animation-name: moveAcross, floatPiece; animation-delay: 10s;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c3/Chess_Piece_-_Pawn_Black.svg" class="piece" style="top: 90%; animation-duration: 26s; animation-name: moveAcross, floatPiece; animation-delay: 12s;">
+</div>
+""", unsafe_allow_html=True)
+
+
     if load_err:
         st.error(f"Gagal memuat model: {load_err}")
     elif yolo_model is None:
