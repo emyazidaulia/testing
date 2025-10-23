@@ -8,29 +8,25 @@ from PIL import Image
 # ==========================
 # Konfigurasi Global
 # ==========================
-CLASS_NAMES = ['Kebakaran Hutan', 'Bukan Kebakaran Hutan'] # sesuaikan
-
-# URL gambar PNG baru
+CLASS_NAMES = ['Kebakaran Hutan', 'Bukan Kebakaran Hutan']
 PNG_URL_DETECT = "https://raw.githubusercontent.com/emyazidaulia/testing/main/sample_images/00000058.png"
+IMG_URLS_HOME = [
+    "https://i.imgur.com/iTMrNAj.jpeg",
+    "https://i.imgur.com/FsTtNpE.jpeg",
+    "https://i.imgur.com/DEqLHqH.gif",
+    "https://i.imgur.com/VwBdFtX.jpeg"
+]
+TOTAL_DURATION = 20
 
-# ==========================
-# Fungsi Background Animasi Global
-# ==========================
+# =======================================================
+# 1. FUNGSI STYLE CSS GLOBAL (Sekarang hanya berisi definisi style)
+# =======================================================
 def set_global_styles():
-    IMG_URLS = [
-        "https://i.imgur.com/iTMrNAj.jpeg",
-        "https://i.imgur.com/FsTtNpE.jpeg",
-        "https://i.imgur.com/DEqLHqH.gif",
-        "https://i.imgur.com/VwBdFtX.jpeg"
-    ]
-    TOTAL_DURATION = 20
-    
-    css_animation = f"""
+    css_global = f"""
     <style>
-    /* RESET BACKGROUND BAWAAN STREAMLIT */
+    /* RESET UTAMA: Mengatur konten utama dan sidebar agar transparan */
     .main, .stApp {{ background: none !important; }}
     
-    /* STYLE TRANSPARANSI KONTEN UTAMA */
     [data-testid="stAppViewBlockContainer"] {{
         background: rgba(14, 17, 23, 0.7) !important;
         backdrop-filter: blur(2px);
@@ -46,75 +42,90 @@ def set_global_styles():
         color: white !important;
         border-color: #003366 !important;
     }}
-    
-    /* 1. LAYER HOME BACKGROUND (IMAGE SWAP) */
-    .home-bg {{
-        content: '';
+
+    /* KEYFRAMES UNTUK HOME BG (Gambar berganti-ganti) */
+    @keyframes image-swap {{
+        0% {{ background-image: url('{IMG_URLS_HOME[0]}'); }}
+        20% {{ background-image: url('{IMG_URLS_HOME[0]}'); }}
+        24% {{ opacity: 0.2; }}
+        25% {{ background-image: url('{IMG_URLS_HOME[1]}'); opacity: 0.5; }}
+        45% {{ background-image: url('{IMG_URLS_HOME[1]}'); }}
+        49% {{ opacity: 0.2; }}
+        50% {{ background-image: url('{IMG_URLS_HOME[2]}'); opacity: 0.5; }}
+        70% {{ background-image: url('{IMG_URLS_HOME[2]}'); }}
+        74% {{ opacity: 0.2; }}
+        75% {{ background-image: url('{IMG_URLS_HOME[3]}'); opacity: 0.5; }}
+        95% {{ background-image: url('{IMG_URLS_HOME[3]}'); }}
+        99% {{ opacity: 0.2; }}
+        100% {{ background-image: url('{IMG_URLS_HOME[0]}'); opacity: 0.5; }}
+    }}
+
+    /* KEYFRAMES UNTUK DETECT BG (Gambar PNG bergerak) */
+    @keyframes move-and-fade {{ 
+        0% {{ transform: translateX(-10%) translateY(10%) scale(0.9) rotate(-2deg); opacity: 0.2; }} 
+        50% {{ transform: translateX(10%) translateY(50%) scale(1.1) rotate(2deg); opacity: 0.4; }} 
+        100% {{ transform: translateX(-10%) translateY(10%) scale(0.9) rotate(-2deg); opacity: 0.2; }} 
+    }}
+
+    /* Style untuk Latar Belakang Home (Menggunakan selector yang lebih umum) */
+    .home-bg-layer {{
         position: fixed;
         top: 0; left: 0;
         width: 100%; height: 100%;
-        z-index: -1;
-        animation: image-swap {TOTAL_DURATION}s infinite;
+        z-index: -1; 
         background-size: cover;
         background-position: center;
         opacity: 0.5;
-        transition: background-image 1s ease-in-out, opacity 1s ease-in-out;
-        display: none; 
+        animation: image-swap {TOTAL_DURATION}s infinite;
     }}
     
-    /* 2. LAYER DETECT BACKGROUND (GAMBAR PNG BERGERAK) */
-    .detect-bg {{
-        content: '';
+    /* Style untuk Gambar Deteksi (Gambar PNG yang bergerak) */
+    .detect-img-layer {{
         position: fixed;
         top: 0; left: 0;
         width: 100%; height: 100%;
-        z-index: -1;
-        background-image: url('{PNG_URL_DETECT}');
-        background-size: 20%; /* Ukuran gambar yang kecil */
-        background-repeat: no-repeat;
-        background-position: top left;
-        opacity: 0.25; /* Transparansi agar tidak mengganggu */
-        animation: move-and-fade 15s ease-in-out infinite alternate; 
-        display: none; 
+        z-index: -2; /* Sangat jauh di belakang */
+        pointer-events: none;
     }}
-
-    /* KEYFRAMES UNTUK HOME BG */
-    @keyframes image-swap {{
-        0% {{ background-image: url('{IMG_URLS[0]}'); }}
-        20% {{ background-image: url('{IMG_URLS[0]}'); }}
-        24% {{ opacity: 0.2; }}
-        25% {{ background-image: url('{IMG_URLS[1]}'); opacity: 0.5; }}
-        45% {{ background-image: url('{IMG_URLS[1]}'); }}
-        49% {{ opacity: 0.2; }}
-        50% {{ background-image: url('{IMG_URLS[2]}'); opacity: 0.5; }}
-        70% {{ background-image: url('{IMG_URLS[2]}'); }}
-        74% {{ opacity: 0.2; }}
-        75% {{ background-image: url('{IMG_URLS[3]}'); opacity: 0.5; }}
-        95% {{ background-image: url('{IMG_URLS[3]}'); }}
-        99% {{ opacity: 0.2; }}
-        100% {{ background-image: url('{IMG_URLS[0]}'); opacity: 0.5; }}
+    .detect-img-layer img {{
+        width: 300px; /* Ukuran yang cukup besar */
+        position: absolute;
+        top: 0; left: 0;
+        opacity: 0.25; 
+        animation: move-and-fade 15s ease-in-out infinite alternate;
+        filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
     }}
     
-    /* KEYFRAMES UNTUK DETECT BG (BERGERAK & MEMUDAR) */
-    @keyframes move-and-fade {{ 
-        0% {{ background-position: 5% 10%; opacity: 0.15; transform: scale(1); }} 
-        50% {{ background-position: 50% 90%; opacity: 0.35; transform: scale(1.1); }} 
-        100% {{ background-position: 95% 10%; opacity: 0.15; transform: scale(1); }} 
-    }}
     </style>
-    
-    <div class="home-bg" id="animated-home-bg"></div>
-
-    <div class="detect-bg" id="animated-detect-bg"></div>
     """
-    st.markdown(css_animation, unsafe_allow_html=True)
+    st.markdown(css_global, unsafe_allow_html=True)
 
 # Panggil fungsi CSS global hanya sekali di awal
 set_global_styles()
 
+
+# =======================================================
+# 2. FUNGSI UNTUK MENGAKTIFKAN BACKGROUND SESUAI HALAMAN
+# =======================================================
+def render_background_layer(page):
+    if page == "home":
+        # Gunakan layer CSS background image swap di halaman Home
+        st.markdown(f'<div class="home-bg-layer"></div>', unsafe_allow_html=True)
+    elif page == "detect":
+        # Gunakan layer gambar HTML bergerak di halaman Deteksi
+        st.markdown(f"""
+        <div class="detect-img-layer">
+            <img src="{PNG_URL_DETECT}" alt="Moving Object">
+        </div>
+        """, unsafe_allow_html=True)
+        # Tambahkan layer gelap tambahan agar konten lebih jelas (opsional)
+        st.markdown('<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.2); z-index: -3;"></div>', unsafe_allow_html=True)
+
+
 # ==========================
 # Load Models (basecode)
 # ==========================
+# (Tidak ada perubahan pada logika loading model)
 @st.cache_resource
 def load_models():
     try:
@@ -165,27 +176,17 @@ with st.sidebar:
     else:
         st.success("✅ Model siap digunakan.")
 
-# ==========================
-# FUNGSI UNTUK MENGAKTIFKAN/MENONAKTIFKAN BACKGROUND
-# ==========================
-def toggle_bg(home_active=False, detect_active=False):
-    # Menggunakan Javascript untuk mengubah style elemen HTML yang kita injeksi
-    js_code = f"""
-    <script>
-    var homeBg = document.getElementById('animated-home-bg');
-    var detectBg = document.getElementById('animated-detect-bg');
-    if (homeBg) homeBg.style.display = '{'block' if home_active else 'none'}';
-    if (detectBg) detectBg.style.display = '{'block' if detect_active else 'none'}';
-    </script>
-    """
-    st.markdown(js_code, unsafe_allow_html=True)
+# =======================================================
+# KONTEN HALAMAN UTAMA
+# =======================================================
+
+# Rendam layer background yang sesuai sebelum konten halaman
+render_background_layer(st.session_state.page)
 
 # ==========================
 # Halaman HOME (dengan background animasi gambar)
 # ==========================
 if st.session_state.page == "home":
-    toggle_bg(home_active=True, detect_active=False) # Aktifkan latar belakang gambar (Home)
-
     st.markdown("<h1 style='text-align:center; color:#FFFFFF; text-shadow: 2px 2px 4px #000000;'>🔥 Aplikasi Analisis Kebakaran Hutan</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center; font-size: 18px; color: white; text-shadow: 1px 1px 3px #000000;'>Pilih salah satu layanan analitik di bawah untuk memulai pemrosesan gambar Anda.</p>", unsafe_allow_html=True)
     st.markdown("---")
@@ -213,10 +214,9 @@ if st.session_state.page == "home":
 # Halaman KLASIFIKASI (background polos)
 # ==========================
 elif st.session_state.page == "classify":
-    toggle_bg(home_active=False, detect_active=False) # Matikan semua latar belakang kustom
-
     st.header("🖼 Menu Klasifikasi Gambar")
-
+    
+    # ... (sisa konten klasifikasi)
     if load_err:
         st.error(f"Gagal memuat model: {load_err}")
     elif classifier is None:
@@ -253,10 +253,9 @@ elif st.session_state.page == "classify":
 # Halaman DETEKSI (background gambar PNG bergerak)
 # ==========================
 elif st.session_state.page == "detect":
-    toggle_bg(home_active=False, detect_active=True) # Aktifkan latar belakang gambar PNG (Detect)
-
     st.header("🎯 Menu Deteksi Objek")
-
+    
+    # ... (sisa konten deteksi)
     if load_err:
         st.error(f"Gagal memuat model: {load_err}")
     elif yolo_model is None:
