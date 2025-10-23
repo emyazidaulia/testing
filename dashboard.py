@@ -1,6 +1,7 @@
 import streamlit as st
 from streamlit_lottie import st_lottie
 import requests 
+# ... (impor lainnya)
 from ultralytics import YOLO
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image
@@ -20,6 +21,7 @@ IMG_URLS_HOME = [
 ]
 TOTAL_DURATION = 20
 IMAGE_COUNT = 5 
+# URL Lottie (Animasi Api/Kebakaran)
 LOTTIE_FIRE_URL = "https://lottie.host/86581997-293e-48ac-b09e-73c3397984f4/T012Yk7w0y.json" 
 
 # =======================================================
@@ -28,7 +30,7 @@ LOTTIE_FIRE_URL = "https://lottie.host/86581997-293e-48ac-b09e-73c3397984f4/T012
 @st.cache_data
 def load_lottieurl(url: str):
     try:
-        r = requests.get(url, timeout=10) # Tambahkan timeout
+        r = requests.get(url, timeout=10) 
         if r.status_code == 200:
             return r.json()
         return None
@@ -110,7 +112,8 @@ def set_global_styles():
         z-index: -2; 
         pointer-events: none;
         overflow: hidden; 
-        line-height: 0;
+        /* Pastikan tidak ada karakter yang dirender */
+        line-height: 0; 
         font-size: 0;
     }}
     
@@ -149,20 +152,15 @@ def render_background_layer(page):
             duration = 25 + (i * 2) 
             delay = i * 5 
             
-            images_html += f"""<img 
-                src="{PNG_URL_DETECT}" 
-                alt="Moving Object {i+1}" 
-                style="
-                    top: {top_percent}%; 
-                    animation-duration: {duration}s;
-                    animation-delay: {delay}s;
-                ">"""
+            # 🚨 PERBAIKAN: Memastikan string HTML dibuat tanpa newline/spasi ekstra
+            images_html += f'<img src="{PNG_URL_DETECT}" alt="Moving Object {i+1}" style="top: {top_percent}%; animation-duration: {duration}s; animation-delay: {delay}s;">'
         
         # Injeksi gambar bergerak (detect-img-layer z-index: -2)
-        html_markup = f"""<div class="detect-img-layer">{images_html}</div>"""
+        # 🚨 PERBAIKAN: Menggunakan format string minimal
+        html_markup = f'<div class="detect-img-layer">{images_html}</div>'
         st.markdown(html_markup, unsafe_allow_html=True)
         
-    # Halaman Klasifikasi tidak memiliki background fixed, Lottie ada di konten utama.
+    # Halaman Klasifikasi tidak memiliki background fixed.
 
 
 # ==========================
@@ -258,10 +256,9 @@ if st.session_state.page == "home":
 elif st.session_state.page == "classify":
     st.header("🖼 Menu Klasifikasi Gambar")
     
-    # 🚨 PERBAIKAN DI SINI: Tampilkan Lottie di atas, menggunakan st.columns
+    # Tampilkan Lottie di tengah atas halaman
     lottie_json = load_lottieurl(LOTTIE_FIRE_URL)
     if lottie_json:
-        # Posisikan Lottie di tengah atas halaman
         col_lottie_1, col_lottie_main, col_lottie_2 = st.columns([1, 2, 1])
         with col_lottie_main:
             st_lottie(
@@ -270,11 +267,10 @@ elif st.session_state.page == "classify":
                 reverse=False,
                 loop=True,
                 quality="medium", 
-                height=250, # Ukuran yang diperbesar sedikit
+                height=250, 
                 key="fire_animation_unique",
             )
-    else:
-        st.warning("⚠️ Gagal memuat animasi Lottie. Cek URL atau koneksi internet Anda.")
+    # 🚨 PERBAIKAN: Menghapus st.warning jika Lottie gagal dimuat agar dashboard bersih.
     
     st.markdown("---")
 
