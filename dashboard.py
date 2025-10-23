@@ -1,8 +1,6 @@
 import streamlit as st
-# Impor pustaka Lottie
 from streamlit_lottie import st_lottie
-import requests # Digunakan untuk mengambil data Lottie
-# ... (impor lainnya)
+import requests 
 from ultralytics import YOLO
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image
@@ -21,10 +19,7 @@ IMG_URLS_HOME = [
     "https://i.imgur.com/VwBdFtX.jpeg"
 ]
 TOTAL_DURATION = 20
-IMAGE_COUNT = 5 # Jumlah gambar kecil yang akan bergerak
-
-# URL Lottie (Animasi Api/Kebakaran)
-# Ganti dengan URL Lottie yang Anda inginkan jika ini tidak cocok
+IMAGE_COUNT = 5 
 LOTTIE_FIRE_URL = "https://lottie.host/86581997-293e-48ac-b09e-73c3397984f4/T012Yk7w0y.json" 
 
 # =======================================================
@@ -39,7 +34,7 @@ def load_lottieurl(url: str):
 
 
 # =======================================================
-# 1. FUNGSI STYLE CSS GLOBAL (Tidak Berubah)
+# 1. FUNGSI STYLE CSS GLOBAL (Dibersihkan dari Lottie CSS)
 # =======================================================
 def set_global_styles():
     css_global = f"""
@@ -82,12 +77,10 @@ def set_global_styles():
 
     /* KEYFRAMES PERGERAKAN HORIZONTAL (Kiri ke Kanan) */
     @keyframes move-and-fade {{ 
-        /* Mulai dari luar kiri */
         0% {{ 
             transform: translateX(-100%) scale(1); 
             opacity: 0.2;
         }} 
-        /* Bergerak ke luar kanan */
         100% {{ 
             transform: translateX(100vw) scale(1.1); 
             opacity: 0.4; 
@@ -111,7 +104,7 @@ def set_global_styles():
         position: fixed; 
         top: 0; left: 0;
         width: 100%; height: 100%;
-        z-index: -2; 
+        z-index: -2; /* Di depan layer gelap global (-3) */
         pointer-events: none;
         overflow: hidden; 
         line-height: 0;
@@ -126,15 +119,6 @@ def set_global_styles():
         animation: move-and-fade 25s linear infinite; 
         filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
     }}
-
-    /* Style untuk Lottie agar di belakang konten utama */
-    .lottie-bg-layer {{
-        position: fixed; 
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        z-index: -2; /* Di belakang konten utama, tapi di depan background gelap */
-        pointer-events: none;
-    }}
     
     </style>
     """
@@ -148,31 +132,11 @@ set_global_styles()
 # 2. FUNGSI UNTUK MENGAKTIFKAN BACKGROUND SESUAI HALAMAN
 # =======================================================
 def render_background_layer(page):
-    # Rendam layer background gelap global (digunakan di semua halaman kecuali classify)
-    if page != "classify":
-        st.markdown('<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.2); z-index: -3;"></div>', unsafe_allow_html=True)
+    # Rendam layer background gelap global (digunakan di semua halaman)
+    st.markdown('<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.2); z-index: -3;"></div>', unsafe_allow_html=True)
 
     if page == "home":
         st.markdown(f'<div class="home-bg-layer"></div>', unsafe_allow_html=True)
-        
-    elif page == "classify":
-        # 🚨 BARU: Menampilkan Lottie di belakang konten (Halaman Klasifikasi)
-        lottie_json = load_lottieurl(LOTTIE_FIRE_URL)
-        if lottie_json:
-            # Gunakan st_lottie di dalam container yang fixed (background)
-            with st.container():
-                st.markdown('<div class="lottie-bg-layer">', unsafe_allow_html=True)
-                st_lottie(
-                    lottie_json,
-                    speed=1,
-                    reverse=False,
-                    loop=True,
-                    quality="low", 
-                    height=800,
-                    width=1500,
-                    key="fire_animation",
-                )
-                st.markdown('</div>', unsafe_allow_html=True)
         
     elif page == "detect":
         # --- GENERATE MULTIPLE MOVING IMAGES ---
@@ -191,10 +155,12 @@ def render_background_layer(page):
                     animation-delay: {delay}s;
                 ">"""
         
+        # Injeksi gambar bergerak (detect-img-layer z-index: -2)
         html_markup = f"""<div class="detect-img-layer">{images_html}</div>"""
         st.markdown(html_markup, unsafe_allow_html=True)
         
-        
+    # Halaman Klasifikasi tidak memiliki background fixed, Lottie akan ditampilkan di dalam konten utama.
+
 
 # ==========================
 # Load Models (basecode)
@@ -284,10 +250,25 @@ if st.session_state.page == "home":
 
 
 # ==========================
-# Halaman KLASIFIKASI (dengan background Lottie)
+# Halaman KLASIFIKASI (dengan Lottie di dalam konten)
 # ==========================
 elif st.session_state.page == "classify":
     st.header("🖼 Menu Klasifikasi Gambar")
+    
+    # 🚨 PERBAIKAN DI SINI: Tampilkan Lottie di atas, menggunakan st.columns
+    lottie_json = load_lottieurl(LOTTIE_FIRE_URL)
+    if lottie_json:
+        col_lottie_1, col_lottie_main, col_lottie_2 = st.columns([1, 2, 1])
+        with col_lottie_main:
+            st_lottie(
+                lottie_json,
+                speed=1,
+                reverse=False,
+                loop=True,
+                quality="low", 
+                height=200, # Ukuran yang lebih wajar
+                key="fire_animation",
+            )
     
     # ... (sisa konten klasifikasi)
     if load_err:
@@ -296,6 +277,7 @@ elif st.session_state.page == "classify":
         st.warning("Model Klasifikasi tidak dapat dimuat. Cek jalur file model (.h5) Anda.")
     else:
         uploaded_file = st.file_uploader("Upload gambar untuk klasifikasi", type=["jpg", "jpeg", "png"])
+        # ... (lanjutan kode klasifikasi tidak berubah)
         if uploaded_file:
             img = Image.open(uploaded_file).convert("RGB")
             st.image(img, caption="Gambar yang diupload", use_container_width=True)
@@ -335,6 +317,7 @@ elif st.session_state.page == "detect":
         st.warning("Model Deteksi Objek tidak dapat dimuat. Cek jalur file model (.pt) Anda.")
     else:
         uploaded_file = st.file_uploader("Upload gambar untuk deteksi objek", type=["jpg", "jpeg", "png"])
+        # ... (lanjutan kode deteksi tidak berubah)
         if uploaded_file:
             img = Image.open(uploaded_file).convert("RGB")
             st.image(img, caption="Gambar yang diupload", use_container_width=True)
