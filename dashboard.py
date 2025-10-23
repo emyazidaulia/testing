@@ -8,12 +8,15 @@ from PIL import Image
 # ==========================
 # Konfigurasi Global
 # ==========================
-CLASS_NAMES = ['Kebakaran Hutan', 'Bukan Kebakaran Hutan']  # sesuaikan
+CLASS_NAMES = ['Kebakaran Hutan', 'Bukan Kebakaran Hutan'] # sesuaikan
+
+# URL gambar PNG baru
+PNG_URL_DETECT = "https://raw.githubusercontent.com/emyazidaulia/testing/main/sample_images/00000058.png"
 
 # ==========================
-# Fungsi Background Animasi (KHUSUS HOME)
+# Fungsi Background Animasi Global
 # ==========================
-def set_animated_background():
+def set_global_styles():
     IMG_URLS = [
         "https://i.imgur.com/iTMrNAj.jpeg",
         "https://i.imgur.com/FsTtNpE.jpeg",
@@ -21,13 +24,31 @@ def set_animated_background():
         "https://i.imgur.com/VwBdFtX.jpeg"
     ]
     TOTAL_DURATION = 20
-
+    
     css_animation = f"""
     <style>
-    .main, .stApp {{
-        background: none !important;
+    /* RESET BACKGROUND BAWAAN STREAMLIT */
+    .main, .stApp {{ background: none !important; }}
+    
+    /* STYLE TRANSPARANSI KONTEN UTAMA */
+    [data-testid="stAppViewBlockContainer"] {{
+        background: rgba(14, 17, 23, 0.7) !important;
+        backdrop-filter: blur(2px);
+        border-radius: 10px;
     }}
-    .stApp:before {{
+    [data-testid="stSidebar"] {{
+        background: rgba(14, 17, 23, 0.9) !important;
+    }}
+    
+    /* STYLE TOMBOL KHUSUS (Biru Tua) */
+    .stApp button[kind="secondary"] {{
+        background-color: #003366 !important;
+        color: white !important;
+        border-color: #003366 !important;
+    }}
+    
+    /* 1. LAYER HOME BACKGROUND (IMAGE SWAP) */
+    .home-bg {{
         content: '';
         position: fixed;
         top: 0; left: 0;
@@ -38,20 +59,26 @@ def set_animated_background():
         background-position: center;
         opacity: 0.5;
         transition: background-image 1s ease-in-out, opacity 1s ease-in-out;
+        display: none; 
     }}
-    [data-testid="stAppViewBlockContainer"] {{
-        background: rgba(14, 17, 23, 0.7) !important;
-        backdrop-filter: blur(2px);
-        border-radius: 10px;
+    
+    /* 2. LAYER DETECT BACKGROUND (GAMBAR PNG BERGERAK) */
+    .detect-bg {{
+        content: '';
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        z-index: -1;
+        background-image: url('{PNG_URL_DETECT}');
+        background-size: 20%; /* Ukuran gambar yang kecil */
+        background-repeat: no-repeat;
+        background-position: top left;
+        opacity: 0.25; /* Transparansi agar tidak mengganggu */
+        animation: move-and-fade 15s ease-in-out infinite alternate; 
+        display: none; 
     }}
-    [data-testid="stSidebar"] {{
-        background: rgba(14, 17, 23, 0.9) !important;
-    }}
-    .stApp button[kind="secondary"] {{
-        background-color: #003366 !important;
-        color: white !important;
-        border-color: #003366 !important;
-    }}
+
+    /* KEYFRAMES UNTUK HOME BG */
     @keyframes image-swap {{
         0% {{ background-image: url('{IMG_URLS[0]}'); }}
         20% {{ background-image: url('{IMG_URLS[0]}'); }}
@@ -67,10 +94,23 @@ def set_animated_background():
         99% {{ opacity: 0.2; }}
         100% {{ background-image: url('{IMG_URLS[0]}'); opacity: 0.5; }}
     }}
+    
+    /* KEYFRAMES UNTUK DETECT BG (BERGERAK & MEMUDAR) */
+    @keyframes move-and-fade {{ 
+        0% {{ background-position: 5% 10%; opacity: 0.15; transform: scale(1); }} 
+        50% {{ background-position: 50% 90%; opacity: 0.35; transform: scale(1.1); }} 
+        100% {{ background-position: 95% 10%; opacity: 0.15; transform: scale(1); }} 
+    }}
     </style>
+    
+    <div class="home-bg" id="animated-home-bg"></div>
+
+    <div class="detect-bg" id="animated-detect-bg"></div>
     """
     st.markdown(css_animation, unsafe_allow_html=True)
 
+# Panggil fungsi CSS global hanya sekali di awal
+set_global_styles()
 
 # ==========================
 # Load Models (basecode)
@@ -126,29 +166,44 @@ with st.sidebar:
         st.success("✅ Model siap digunakan.")
 
 # ==========================
-# Halaman HOME (dengan background animasi)
+# FUNGSI UNTUK MENGAKTIFKAN/MENONAKTIFKAN BACKGROUND
+# ==========================
+def toggle_bg(home_active=False, detect_active=False):
+    # Menggunakan Javascript untuk mengubah style elemen HTML yang kita injeksi
+    js_code = f"""
+    <script>
+    var homeBg = document.getElementById('animated-home-bg');
+    var detectBg = document.getElementById('animated-detect-bg');
+    if (homeBg) homeBg.style.display = '{'block' if home_active else 'none'}';
+    if (detectBg) detectBg.style.display = '{'block' if detect_active else 'none'}';
+    </script>
+    """
+    st.markdown(js_code, unsafe_allow_html=True)
+
+# ==========================
+# Halaman HOME (dengan background animasi gambar)
 # ==========================
 if st.session_state.page == "home":
-    set_animated_background()  # <── hanya aktif di halaman home
+    toggle_bg(home_active=True, detect_active=False) # Aktifkan latar belakang gambar (Home)
 
-    st.markdown("<h1 style='text-align:center; color:#FFFFFF; text-shadow: 2px 2px 4px #000000;'>Analisis Gambar</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; font-size: 18px; color: white; text-shadow: 1px 1px 3px #000000;'>Pilih salah satu pilihan di bawah untuk memulai pemrosesan gambar Anda.</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center; color:#FFFFFF; text-shadow: 2px 2px 4px #000000;'>🔥 Aplikasi Analisis Kebakaran Hutan</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; font-size: 18px; color: white; text-shadow: 1px 1px 3px #000000;'>Pilih salah satu layanan analitik di bawah untuk memulai pemrosesan gambar Anda.</p>", unsafe_allow_html=True)
     st.markdown("---")
 
     col_classify, col_detect = st.columns(2)
 
     with col_classify:
         with st.container(border=True):
-            st.header("🔥 Klasifikasi Gambar Hutan")
+            st.header("🖼 Klasifikasi Gambar")
             st.caption("Cek Tipe Gambar")
             st.write("Sistem akan mengklasifikasikan gambar yang Anda unggah sebagai **'Kebakaran Hutan'** atau **'Bukan Kebakaran Hutan'**.")
             st.button("➡️ Mulai Klasifikasi", key="home_open_classify_unique", on_click=go_to, args=("classify",), use_container_width=True, type="primary")
 
     with col_detect:
         with st.container(border=True):
-            st.header("♞ Deteksi Bidak Catur")
+            st.header("🎯 Deteksi Objek")
             st.caption("Temukan Lokasi Spesifik")
-            st.write("Sistem akan mendeteksi dan menandai bidak catur di dalam gambar, memberikan *bounding box* hasil deteksi.")
+            st.write("Sistem akan mendeteksi dan menandai **api** atau **asap** di dalam gambar, memberikan *bounding box* hasil deteksi.")
             st.button("➡️ Mulai Deteksi Objek", key="home_open_detect_unique", on_click=go_to, args=("detect",), use_container_width=True)
 
     st.markdown("<div style='height:50px;'></div>", unsafe_allow_html=True)
@@ -158,7 +213,8 @@ if st.session_state.page == "home":
 # Halaman KLASIFIKASI (background polos)
 # ==========================
 elif st.session_state.page == "classify":
-    st.markdown("<style>.stApp:before {content:none !important; background:none !important;}</style>", unsafe_allow_html=True)
+    toggle_bg(home_active=False, detect_active=False) # Matikan semua latar belakang kustom
+
     st.header("🖼 Menu Klasifikasi Gambar")
 
     if load_err:
@@ -189,34 +245,17 @@ elif st.session_state.page == "classify":
                     st.write(f"Tingkat Keyakinan: **{probability*100:.2f}%**")
                 else:
                     st.error("Indeks kelas tidak valid. Pastikan CLASS_NAMES sudah benar.")
-                st.markdown("---")
-                st.button("⬅ Kembali ke Home", key="back_from_classify", on_click=go_to, args=("home",))
+            st.markdown("---")
+            st.button("⬅ Kembali ke Home", key="back_from_classify", on_click=go_to, args=("home",))
 
 
 # ==========================
-# Halaman DETEKSI (polos + animasi bidak catur)
+# Halaman DETEKSI (background gambar PNG bergerak)
 # ==========================
 elif st.session_state.page == "detect":
-    st.markdown("<style>.stApp:before {content:none !important; background:none !important;}</style>", unsafe_allow_html=True)
-    st.header("🎯 Menu Deteksi Objek")
+    toggle_bg(home_active=False, detect_active=True) # Aktifkan latar belakang gambar PNG (Detect)
 
-    # Animasi bidak catur bergerak
-    st.markdown("""
-    <style>
-    .chess-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: -2; pointer-events: none; }
-    .piece { position: absolute; width: 60px; opacity: 0.35; animation: floatPiece linear infinite; filter: drop-shadow(0 0 5px rgba(255,255,255,0.3)); }
-    @keyframes floatPiece { 0% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-25px) rotate(10deg); } 100% { transform: translateY(0px) rotate(0deg); } }
-    @keyframes moveAcross { 0% { left: -10%; } 100% { left: 110%; } }
-    </style>
-    <div class="chess-bg">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Chess_Piece_-_King_White.svg" class="piece" style="top: 10%; animation: moveAcross 25s linear infinite, floatPiece 4s ease-in-out infinite;">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_Piece_-_Queen_Black.svg" class="piece" style="top: 30%; animation: moveAcross 30s linear infinite 5s, floatPiece 5s ease-in-out infinite;">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/f/f1/Chess_Piece_-_Rook_White.svg" class="piece" style="top: 50%; animation: moveAcross 28s linear infinite 8s, floatPiece 4s ease-in-out infinite;">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/2/28/Chess_Piece_-_Bishop_Black.svg" class="piece" style="top: 65%; animation: moveAcross 22s linear infinite 2s, floatPiece 5s ease-in-out infinite;">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_Piece_-_Knight_White.svg" class="piece" style="top: 80%; animation: moveAcross 32s linear infinite 10s, floatPiece 4s ease-in-out infinite;">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/c/c3/Chess_Piece_-_Pawn_Black.svg" class="piece" style="top: 90%; animation: moveAcross 26s linear infinite 12s, floatPiece 5s ease-in-out infinite;">
-    </div>
-    """, unsafe_allow_html=True)
+    st.header("🎯 Menu Deteksi Objek")
 
     if load_err:
         st.error(f"Gagal memuat model: {load_err}")
