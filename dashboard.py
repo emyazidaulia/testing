@@ -1,4 +1,8 @@
 import streamlit as st
+# Impor pustaka Lottie
+from streamlit_lottie import st_lottie
+import requests # Digunakan untuk mengambil data Lottie
+# ... (impor lainnya)
 from ultralytics import YOLO
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image
@@ -19,8 +23,23 @@ IMG_URLS_HOME = [
 TOTAL_DURATION = 20
 IMAGE_COUNT = 5 # Jumlah gambar kecil yang akan bergerak
 
+# URL Lottie (Animasi Api/Kebakaran)
+# Ganti dengan URL Lottie yang Anda inginkan jika ini tidak cocok
+LOTTIE_FIRE_URL = "https://lottie.host/86581997-293e-48ac-b09e-73c3397984f4/T012Yk7w0y.json" 
+
 # =======================================================
-# 1. FUNGSI STYLE CSS GLOBAL (Diperbarui untuk Menyembunyikan Markup HTML)
+# Fungsi Bantuan untuk Lottie
+# =======================================================
+@st.cache_data
+def load_lottieurl(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+
+# =======================================================
+# 1. FUNGSI STYLE CSS GLOBAL (Tidak Berubah)
 # =======================================================
 def set_global_styles():
     css_global = f"""
@@ -87,15 +106,14 @@ def set_global_styles():
         animation: image-swap {TOTAL_DURATION}s infinite;
     }}
     
-    /* 🚨 PERBAIKAN DI SINI: Style untuk Container Gambar Deteksi */
+    /* Style untuk Container Gambar Deteksi */
     .detect-img-layer {{
-        position: fixed; /* Penting agar tidak menjadi bagian dari alur konten */
+        position: fixed; 
         top: 0; left: 0;
         width: 100%; height: 100%;
         z-index: -2; 
         pointer-events: none;
         overflow: hidden; 
-        /* Menyembunyikan potensi teks/spasi yang tidak ter-parse */
         line-height: 0;
         font-size: 0;
     }}
@@ -109,6 +127,15 @@ def set_global_styles():
         filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
     }}
 
+    /* Style untuk Lottie agar di belakang konten utama */
+    .lottie-bg-layer {{
+        position: fixed; 
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        z-index: -2; /* Di belakang konten utama, tapi di depan background gelap */
+        pointer-events: none;
+    }}
+    
     </style>
     """
     st.markdown(css_global, unsafe_allow_html=True)
@@ -121,21 +148,40 @@ set_global_styles()
 # 2. FUNGSI UNTUK MENGAKTIFKAN BACKGROUND SESUAI HALAMAN
 # =======================================================
 def render_background_layer(page):
+    # Rendam layer background gelap global (digunakan di semua halaman kecuali classify)
+    if page != "classify":
+        st.markdown('<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.2); z-index: -3;"></div>', unsafe_allow_html=True)
+
     if page == "home":
         st.markdown(f'<div class="home-bg-layer"></div>', unsafe_allow_html=True)
+        
+    elif page == "classify":
+        # 🚨 BARU: Menampilkan Lottie di belakang konten (Halaman Klasifikasi)
+        lottie_json = load_lottieurl(LOTTIE_FIRE_URL)
+        if lottie_json:
+            # Gunakan st_lottie di dalam container yang fixed (background)
+            with st.container():
+                st.markdown('<div class="lottie-bg-layer">', unsafe_allow_html=True)
+                st_lottie(
+                    lottie_json,
+                    speed=1,
+                    reverse=False,
+                    loop=True,
+                    quality="low", 
+                    height=800,
+                    width=1500,
+                    key="fire_animation",
+                )
+                st.markdown('</div>', unsafe_allow_html=True)
+        
     elif page == "detect":
         # --- GENERATE MULTIPLE MOVING IMAGES ---
         images_html = ""
-        # Loop untuk membuat 5 gambar dengan posisi Y (atas/bawah) dan delay yang berbeda
         for i in range(IMAGE_COUNT):
-            # Posisi vertikal yang tersebar
             top_percent = 10 + (i * 15) 
-            # Durasi animasi yang sedikit berbeda
             duration = 25 + (i * 2) 
-            # Delay untuk memastikan tidak bergerak bersamaan
             delay = i * 5 
             
-            # Perhatikan: Tidak ada spasi atau baris baru antara tag HTML di sini
             images_html += f"""<img 
                 src="{PNG_URL_DETECT}" 
                 alt="Moving Object {i+1}" 
@@ -145,19 +191,14 @@ def render_background_layer(page):
                     animation-delay: {delay}s;
                 ">"""
         
-        # 🚨 PERBAIKAN DI SINI: Pastikan tidak ada spasi di sekitar {images_html}
-        # dan gunakan satu string minimal untuk mengurangi risiko Streamlit menampilkan markup.
         html_markup = f"""<div class="detect-img-layer">{images_html}</div>"""
         st.markdown(html_markup, unsafe_allow_html=True)
         
-        # Tambahkan layer gelap tambahan agar konten lebih jelas
-        st.markdown('<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.2); z-index: -3;"></div>', unsafe_allow_html=True)
-
+        
 
 # ==========================
 # Load Models (basecode)
 # ==========================
-# ... (Kode loading model tidak berubah)
 @st.cache_resource
 def load_models():
     try:
@@ -243,7 +284,7 @@ if st.session_state.page == "home":
 
 
 # ==========================
-# Halaman KLASIFIKASI (background polos)
+# Halaman KLASIFIKASI (dengan background Lottie)
 # ==========================
 elif st.session_state.page == "classify":
     st.header("🖼 Menu Klasifikasi Gambar")
