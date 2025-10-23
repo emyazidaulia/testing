@@ -4,7 +4,7 @@ import tensorflow as tf
 from tensorflow.keras.preprocessing import image
 import numpy as np
 from PIL import Image
-import random # Diperlukan untuk delay acak
+import random 
 
 # ==========================
 # Konfigurasi Global
@@ -19,22 +19,17 @@ IMG_URLS_HOME = [
 ]
 TOTAL_DURATION = 20
 IMAGE_COUNT_DETECT = 5 
-EMOJI_COUNT_CLASSIFY = 40 # 🚨 DIPERBANYAK: Dari 25 menjadi 40
-EMOJIS_CLASSIFY = ["🔥", "🌲"] # 🚨 BARU: Menambahkan emoji pohon
+EMOJI_COUNT_CLASSIFY = 40 
+EMOJIS_CLASSIFY = ["🔥", "🌲"] 
 
 # =======================================================
-# Fungsi Bantuan untuk Lottie (Dihapus)
-# =======================================================
-# Fungsi load_lottieurl telah dihapus.
-
-
-# =======================================================
-# 1. FUNGSI STYLE CSS GLOBAL (Diperbarui untuk Animasi Emoji yang Lebih Cepat)
+# 1. FUNGSI STYLE CSS GLOBAL (Diperbarui untuk Pergerakan Acak)
 # =======================================================
 def set_global_styles():
     css_global = f"""
     <style>
-    /* RESET UTAMA: Mengatur konten utama dan sidebar agar transparan */
+    /* ... (Style Home dan Deteksi tidak berubah) ... */
+    
     .main, .stApp {{ background: none !important; }}
     
     [data-testid="stAppViewBlockContainer"] {{
@@ -46,14 +41,12 @@ def set_global_styles():
         background: rgba(14, 17, 23, 0.9) !important;
     }}
     
-    /* STYLE TOMBOL KHUSUS (Biru Tua) */
     .stApp button[kind="secondary"] {{
         background-color: #003366 !important;
         color: white !important;
         border-color: #003366 !important;
     }}
 
-    /* KEYFRAMES UNTUK HOME BG (Gambar berganti-ganti) */
     @keyframes image-swap {{
         0% {{ background-image: url('{IMG_URLS_HOME[0]}'); }}
         20% {{ background-image: url('{IMG_URLS_HOME[0]}'); }}
@@ -70,7 +63,6 @@ def set_global_styles():
         100% {{ background-image: url('{IMG_URLS_HOME[0]}'); opacity: 0.5; }}
     }}
 
-    /* KEYFRAMES PERGERAKAN HORIZONTAL UNTUK GAMBAR (Deteksi) */
     @keyframes move-and-fade-detect {{ 
         0% {{ 
             transform: translateX(-100%) scale(1); 
@@ -82,17 +74,23 @@ def set_global_styles():
         }} 
     }}
 
-    /* 🚨 DIPERCEPAT: KEYFRAMES UNTUK EMOJI API (Klasifikasi) */
+    /* 🚨 PERBAIKAN: KEYFRAMES UNTUK PERGERAKAN ACAK/MELINGKAR */
+    /* Setiap emoji akan bergerak dari posisi awal yang berbeda ke posisi acak */
     @keyframes move-and-spin-emoji {{ 
         0% {{ 
-            transform: translate(0, 100vh) rotate(0deg); 
+            transform: translate(0, 0) rotate(0deg) scale(0.5); 
             opacity: 0;
         }} 
-        50% {{
-            opacity: 0.7; /* Sedikit lebih jelas di tengah */
+        30% {{
+            transform: translate(25vw, -30vh) rotate(180deg) scale(0.8);
+            opacity: 0.7; 
+        }}
+        70% {{
+            transform: translate(75vw, 50vh) rotate(540deg) scale(1.1);
+            opacity: 0.7;
         }}
         100% {{ 
-            transform: translate(100vw, -20vh) rotate(720deg); 
+            transform: translate(100vw, 100vh) rotate(720deg) scale(0.5); 
             opacity: 0; 
         }} 
     }}
@@ -149,7 +147,6 @@ def set_global_styles():
         animation: move-and-spin-emoji 15s infinite ease-in-out; 
         display: block;
         line-height: 1;
-        /* Tambahkan bayangan untuk menonjolkan emoji */
         filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.5));
     }}
     
@@ -176,17 +173,17 @@ def render_background_layer(page):
         emojis_html = ""
         
         for i in range(EMOJI_COUNT_CLASSIFY):
-            # Posisi acak
-            left_percent = random.randint(0, 100) 
-            # 🚨 DIPERCEPAT: Durasi acak yang lebih pendek
+            # 🚨 PERBAIKAN: Posisi awal acak di seluruh layar
+            left_percent = random.randint(-20, 100) # Mulai dari kiri luar sampai kanan
+            top_percent = random.randint(0, 100) # Mulai dari atas sampai bawah
+            
             duration = random.uniform(8, 12) 
-            # 🚨 DIPERCEPAT: Delay acak yang lebih pendek
             delay = random.uniform(0, 8) 
             
-            # 🚨 BARU: Ambil emoji secara acak dari list EMOJIS_CLASSIFY
             selected_emoji = random.choice(EMOJIS_CLASSIFY)
             
-            emojis_html += f'<span style="left: {left_percent}%; animation-duration: {duration:.2f}s; animation-delay: {delay:.2f}s;">{selected_emoji}</span>'
+            # Gunakan 'left' dan 'top' untuk menentukan posisi awal
+            emojis_html += f'<span style="left: {left_percent}%; top: {top_percent}%; animation-duration: {duration:.2f}s; animation-delay: {delay:.2f}s;">{selected_emoji}</span>'
         
         html_markup = f'<div class="fire-emoji-layer">{emojis_html}</div>'
         st.markdown(html_markup, unsafe_allow_html=True)
