@@ -1,11 +1,10 @@
 import streamlit as st
-# from streamlit_lottie import st_lottie # DIHAPUS
-# import requests # DIHAPUS (karena hanya untuk Lottie)
 from ultralytics import YOLO
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image
 import numpy as np
 from PIL import Image
+import random # Diperlukan untuk delay acak
 
 # ==========================
 # Konfigurasi Global
@@ -19,12 +18,18 @@ IMG_URLS_HOME = [
     "https://i.imgur.com/VwBdFtX.jpeg"
 ]
 TOTAL_DURATION = 20
-IMAGE_COUNT_DETECT = 5 # Jumlah gambar kecil yang akan bergerak di Deteksi
-EMOJI_COUNT_CLASSIFY = 10 # Jumlah emoji yang akan bergerak di Klasifikasi
-EMOJI = "🔥"
+IMAGE_COUNT_DETECT = 5 
+EMOJI_COUNT_CLASSIFY = 40 # 🚨 DIPERBANYAK: Dari 25 menjadi 40
+EMOJIS_CLASSIFY = ["🔥", "🌲"] # 🚨 BARU: Menambahkan emoji pohon
 
 # =======================================================
-# 1. FUNGSI STYLE CSS GLOBAL (Diperbarui untuk Animasi Emoji)
+# Fungsi Bantuan untuk Lottie (Dihapus)
+# =======================================================
+# Fungsi load_lottieurl telah dihapus.
+
+
+# =======================================================
+# 1. FUNGSI STYLE CSS GLOBAL (Diperbarui untuk Animasi Emoji yang Lebih Cepat)
 # =======================================================
 def set_global_styles():
     css_global = f"""
@@ -77,14 +82,14 @@ def set_global_styles():
         }} 
     }}
 
-    /* 🚨 BARU: KEYFRAMES UNTUK EMOJI API (Klasifikasi) */
+    /* 🚨 DIPERCEPAT: KEYFRAMES UNTUK EMOJI API (Klasifikasi) */
     @keyframes move-and-spin-emoji {{ 
         0% {{ 
             transform: translate(0, 100vh) rotate(0deg); 
             opacity: 0;
         }} 
         50% {{
-            opacity: 0.6;
+            opacity: 0.7; /* Sedikit lebih jelas di tengah */
         }}
         100% {{ 
             transform: translate(100vw, -20vh) rotate(720deg); 
@@ -125,7 +130,7 @@ def set_global_styles():
         filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
     }}
 
-    /* 🚨 BARU: Style untuk Layer Emoji Api (Klasifikasi) */
+    /* Style untuk Layer Emoji Api (Klasifikasi) */
     .fire-emoji-layer {{
         position: fixed; 
         top: 0; left: 0;
@@ -133,18 +138,19 @@ def set_global_styles():
         z-index: -2; 
         pointer-events: none;
         overflow: hidden; 
-        font-size: 0; /* Penting untuk mencegah rendering teks */
+        font-size: 0; 
     }}
     
-    /* 🚨 BARU: Style untuk Setiap Emoji */
+    /* Style untuk Setiap Emoji */
     .fire-emoji-layer span {{
         position: absolute;
-        font-size: 50px; /* Ukuran emoji */
-        opacity: 0; /* Dimulai tersembunyi */
-        animation: move-and-spin-emoji 20s infinite ease-in-out; /* Animasi Vertikal & Rotasi */
+        font-size: 50px; 
+        opacity: 0; 
+        animation: move-and-spin-emoji 15s infinite ease-in-out; 
         display: block;
         line-height: 1;
-        text-shadow: 0 0 5px rgba(255, 100, 0, 0.8);
+        /* Tambahkan bayangan untuk menonjolkan emoji */
+        filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.5));
     }}
     
     </style>
@@ -166,18 +172,21 @@ def render_background_layer(page):
         st.markdown(f'<div class="home-bg-layer"></div>', unsafe_allow_html=True)
         
     elif page == "classify":
-        # 🚨 BARU: GENERATE MULTIPLE MOVING EMOJI (Klasifikasi)
+        # --- GENERATE MULTIPLE MOVING EMOJI (Klasifikasi) ---
         emojis_html = ""
-        import random
+        
         for i in range(EMOJI_COUNT_CLASSIFY):
-            # Posisi horizontal acak
+            # Posisi acak
             left_percent = random.randint(0, 100) 
-            # Durasi dan delay acak untuk variasi
-            duration = random.uniform(15, 30) 
-            delay = random.uniform(0, 15) 
+            # 🚨 DIPERCEPAT: Durasi acak yang lebih pendek
+            duration = random.uniform(8, 12) 
+            # 🚨 DIPERCEPAT: Delay acak yang lebih pendek
+            delay = random.uniform(0, 8) 
             
-            # 🚨 Penting: Gunakan <span> untuk emoji dan pastikan string minimal
-            emojis_html += f'<span style="left: {left_percent}%; animation-duration: {duration:.2f}s; animation-delay: {delay:.2f}s;">{EMOJI}</span>'
+            # 🚨 BARU: Ambil emoji secara acak dari list EMOJIS_CLASSIFY
+            selected_emoji = random.choice(EMOJIS_CLASSIFY)
+            
+            emojis_html += f'<span style="left: {left_percent}%; animation-duration: {duration:.2f}s; animation-delay: {delay:.2f}s;">{selected_emoji}</span>'
         
         html_markup = f'<div class="fire-emoji-layer">{emojis_html}</div>'
         st.markdown(html_markup, unsafe_allow_html=True)
@@ -190,10 +199,8 @@ def render_background_layer(page):
             duration = 25 + (i * 2) 
             delay = i * 5 
             
-            # Pastikan string HTML dibuat tanpa newline/spasi ekstra
             images_html += f'<img src="{PNG_URL_DETECT}" alt="Moving Object {i+1}" style="top: {top_percent}%; animation-duration: {duration}s; animation-delay: {delay}s;">'
         
-        # Injeksi gambar bergerak (detect-img-layer z-index: -2)
         html_markup = f'<div class="detect-img-layer">{images_html}</div>'
         st.markdown(html_markup, unsafe_allow_html=True)
 
@@ -204,7 +211,6 @@ def render_background_layer(page):
 @st.cache_resource
 def load_models():
     try:
-        # PENTING: Ganti path model Anda di sini
         yolo_model = YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt")
         classifier = tf.keras.models.load_model("model/Muhammad Yazid Aulia_Laporan 2.h5")
         return yolo_model, classifier
@@ -292,8 +298,7 @@ if st.session_state.page == "home":
 elif st.session_state.page == "classify":
     st.header("🖼 Menu Klasifikasi Gambar")
     
-    # Tidak ada lagi Lottie di sini
-    st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True) # Tambahkan spasi di atas konten
+    st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True) 
 
     # ... (sisa konten klasifikasi)
     if load_err:
