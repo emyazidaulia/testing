@@ -8,145 +8,84 @@ from PIL import Image
 # ==========================
 # Konfigurasi Global
 # ==========================
-CLASS_NAMES = ['Kebakaran Hutan', 'Bukan Kebakaran Hutan']  # sesuaikan
+CLASS_NAMES = ['Kebakaran Hutan', 'Bukan Kebakaran Hutan']
 
 # ==========================
-# Custom CSS untuk Animated Background (DIPERBAIKI)
+# Custom CSS untuk Animated Background
 # ==========================
-
 def set_animated_background():
-    # Link gambar yang Anda berikan
     IMG_URLS = [
-        "https://i.imgur.com/iTMrNAj.jpeg",  # Gambar 1
-        "https://i.imgur.com/FsTtNpE.jpeg",  # Gambar 2
-        "https://i.imgur.com/DEqLHqH.gif",   # Gambar 3 (GIF)
-        "https://i.imgur.com/VwBdFtX.jpeg"   # Gambar 4
+        "https://i.imgur.com/iTMrNAj.jpeg",
+        "https://i.imgur.com/FsTtNpE.jpeg",
+        "https://i.imgur.com/DEqLHqH.gif",
+        "https://i.imgur.com/VwBdFtX.jpeg"
     ]
-    
     TOTAL_DURATION = 20
-    
+
     css_animation = f"""
     <style>
-    /* 1. MENGATASI LATAR BELAKANG STREAMLIT BAWAAN */
-    .main {{
+    .main, .stApp {{
         background: none !important;
     }}
-    .stApp {{
-        background: none !important;
-    }}
-
-    /* 2. MEMBUAT LAPISAN LATAR BELAKANG BERANIMASI PADA LEVEL ROOT */
     .stApp:before {{
         content: '';
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1; 
-        animation: image-swap {TOTAL_DURATION}s infinite; 
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        z-index: -1;
+        animation: image-swap {TOTAL_DURATION}s infinite;
         background-size: cover;
         background-position: center;
-        opacity: 0.5; 
+        opacity: 0.5;
         transition: background-image 1s ease-in-out, opacity 1s ease-in-out;
     }}
-
-    /* 3. MEMASTIKAN KONTEN UTAMA CUKUP TRANSPARAN */
     [data-testid="stAppViewBlockContainer"] {{
-        background: rgba(14, 17, 23, 0.7) !important; 
-        backdrop-filter: blur(2px); 
+        background: rgba(14,17,23,0.7) !important;
+        backdrop-filter: blur(2px);
         border-radius: 10px;
     }}
     [data-testid="stSidebar"] {{
-        background: rgba(14, 17, 23, 0.9) !important; 
+        background: rgba(14,17,23,0.9) !important;
     }}
-    
-    /* ======================================= */
-    /* 4. PERBAIKAN WARNA TOMBOL KHUSUS */
-    /* Menargetkan tombol sekunder/default Streamlit dan mengubahnya menjadi biru tua */
-    
-    /* Selector ini menargetkan tombol yang tidak bertipe primary. */
     .stApp button[kind="secondary"] {{
-        background-color: #003366 !important; /* Biru Tua */
+        background-color: #003366 !important;
         color: white !important;
         border-color: #003366 !important;
     }}
-
-    /* Jika Anda ingin tombol sidebar (Home, Klasifikasi, Deteksi) tetap default, 
-       kita harus menargetkan tombol di luar sidebar (yang juga bertipe secondary)
-       menggunakan parent container, tetapi metode di atas biasanya cukup untuk 
-       tombol di body utama. Tombol di sidebar akan ikut berubah. */
-    /* ======================================= */
-
-    /* 5. DEFINISI KEYFRAMES UNTUK ANIMASI */
     @keyframes image-swap {{
-        /* Gambar 1 */
-        0%      {{ background-image: url('{IMG_URLS[0]}'); }}
-        20%     {{ background-image: url('{IMG_URLS[0]}'); }}
-        
-        /* Transisi ke Gambar 2 */
-        24%     {{ opacity: 0.2; }}
-        25%     {{ background-image: url('{IMG_URLS[1]}'); opacity: 0.5; }}
-
-        /* Gambar 2 */
-        45%     {{ background-image: url('{IMG_URLS[1]}'); }}
-        
-        /* Transisi ke Gambar 3 (GIF) */
-        49%     {{ opacity: 0.2; }}
-        50%     {{ background-image: url('{IMG_URLS[2]}'); opacity: 0.5; }}
-
-        /* Gambar 3 (GIF) */
-        70%     {{ background-image: url('{IMG_URLS[2]}'); }}
-
-        /* Transisi ke Gambar 4 */
-        74%     {{ opacity: 0.2; }}
-        75%     {{ background-image: url('{IMG_URLS[3]}'); opacity: 0.5; }}
-
-        /* Gambar 4 */
-        95%     {{ background-image: url('{IMG_URLS[3]}'); }}
-        
-        /* Transisi kembali ke Gambar 1 */
-        99%     {{ opacity: 0.2; }}
-        100%    {{ background-image: url('{IMG_URLS[0]}'); opacity: 0.5; }}
+        0%,20% {{ background-image: url('{IMG_URLS[0]}'); }}
+        25%,45% {{ background-image: url('{IMG_URLS[1]}'); }}
+        50%,70% {{ background-image: url('{IMG_URLS[2]}'); }}
+        75%,95% {{ background-image: url('{IMG_URLS[3]}'); }}
+        100% {{ background-image: url('{IMG_URLS[0]}'); }}
     }}
     </style>
     """
     st.markdown(css_animation, unsafe_allow_html=True)
 
-# Panggil fungsi CSS sebelum konfigurasi Streamlit
 set_animated_background()
 
 # ==========================
-# Load Models (basecode)
+# Load Models
 # ==========================
 @st.cache_resource
 def load_models():
     try:
-        yolo_model = YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt") 
-        classifier = tf.keras.models.load_model("model/Muhammad Yazid Aulia_Laporan 2.h5") 
-        return yolo_model, classifier
+        yolo_model = YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt")
+        classifier = tf.keras.models.load_model("model/Muhammad Yazid Aulia_Laporan 2.h5")
+        return yolo_model, classifier, None
     except Exception as e:
         return None, None, str(e)
 
-# Load model dan tangani error
-models = load_models()
-if isinstance(models, tuple) and len(models) == 3:
-    yolo_model, classifier, load_err = models
-else:
-    try:
-        yolo_model, classifier = models
-        load_err = None
-    except Exception:
-        yolo_model, classifier, load_err = None, None, "Unknown error saat memuat model."
+yolo_model, classifier, load_err = load_models()
 
 # ==========================
 # Konfigurasi Halaman
 # ==========================
-# st.set_page_config harus dipanggil setelah st.markdown(css)
 st.set_page_config(page_title="Image Classifier & Detection", layout="wide")
 
 # ==========================
-# Navigasi (Session State)
+# Navigasi
 # ==========================
 if "page" not in st.session_state:
     st.session_state.page = "home"
@@ -154,9 +93,6 @@ if "page" not in st.session_state:
 def go_to(page_name):
     st.session_state.page = page_name
 
-# ==========================
-# Sidebar Navigasi
-# ==========================
 with st.sidebar:
     st.title("🔍 Menu Navigasi")
     st.button("🏠 Home", key="nav_home", on_click=go_to, args=("home",), use_container_width=True)
@@ -171,40 +107,29 @@ with st.sidebar:
         st.success("✅ Model siap digunakan.")
 
 # ==========================
-# Halaman HOME 
+# Halaman HOME
 # ==========================
 if st.session_state.page == "home":
-    # Judul dan pengantar 
-    st.markdown("<h1 style='text-align:center; color:#FFFFFF; text-shadow: 2px 2px 4px #000000;'> Analisis Gambar</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; font-size: 18px; color: white; text-shadow: 1px 1px 3px #000000;'>Pilih salah satu pilihan di bawah untuk memulai pemrosesan gambar Anda.</p>", unsafe_allow_html=True)
-    
-    st.markdown("---") 
+    st.markdown("<h1 style='text-align:center; color:white;'>Analisis Gambar</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:white;'>Pilih salah satu menu di bawah untuk memulai.</p>", unsafe_allow_html=True)
+    st.markdown("---")
 
-    col_classify, col_detect = st.columns(2)
+    col1, col2 = st.columns(2)
 
-    # --- Kartu Klasifikasi ---
-    with col_classify:
-        with st.container(border=True): 
-            st.header("🔥 Klasifikasi Gambar Hutan") 
-            st.caption("Cek Tipe Gambar")
-            st.write("Sistem akan mengklasifikasikan gambar yang Anda unggah sebagai **'Kebakaran Hutan'** atau **'Bukan Kebakaran Hutan'**.")
-            st.button("➡️ Mulai Klasifikasi", key="home_open_classify_unique",
-                      on_click=go_to, args=("classify",), use_container_width=True, type="primary")
-
-    # --- Kartu Deteksi Objek ---
-    with col_detect:
+    with col1:
         with st.container(border=True):
-            st.header("♞ Deteksi Bidak Catur") 
-            st.caption("Temukan Lokasi Spesifik")
-            st.write("Sistem akan mendeteksi dan menandai bidak catur di dalam gambar, memberikan *bounding box* hasil deteksi.")
-            # Tombol ini secara default bertipe 'secondary' sehingga akan mengikuti style CSS biru tua di atas
-            st.button("➡️ Mulai Deteksi Objek", key="home_open_detect_unique",
-                      on_click=go_to, args=("detect",), use_container_width=True) 
+            st.header("🔥 Klasifikasi Gambar Hutan")
+            st.write("Klasifikasikan gambar menjadi **Kebakaran Hutan** atau **Bukan Kebakaran Hutan**.")
+            st.button("➡️ Mulai Klasifikasi", key="home_classify", on_click=go_to, args=("classify",), use_container_width=True, type="primary")
 
-    st.markdown("<div style='height:50px;'></div>", unsafe_allow_html=True) 
+    with col2:
+        with st.container(border=True):
+            st.header("♞ Deteksi Bidak Catur")
+            st.write("Deteksi posisi bidak catur pada gambar.")
+            st.button("➡️ Mulai Deteksi", key="home_detect", on_click=go_to, args=("detect",), use_container_width=True)
 
 # ==========================
-# Halaman KLASIFIKASI GAMBAR
+# Halaman KLASIFIKASI
 # ==========================
 elif st.session_state.page == "classify":
     st.header("🖼 Menu Klasifikasi Gambar")
@@ -212,140 +137,105 @@ elif st.session_state.page == "classify":
     if load_err:
         st.error(f"Gagal memuat model: {load_err}")
     elif classifier is None:
-        st.warning("Model Klasifikasi tidak dapat dimuat. Cek jalur file model (.h5) Anda.")
+        st.warning("Model Klasifikasi tidak dapat dimuat.")
     else:
         uploaded_file = st.file_uploader("Upload gambar untuk klasifikasi", type=["jpg", "jpeg", "png"])
-
         if uploaded_file:
             img = Image.open(uploaded_file).convert("RGB")
             st.image(img, caption="Gambar yang diupload", use_container_width=True)
 
-            if st.button('Lakukan Klasifikasi', type="primary", use_container_width=True):
-                with st.spinner('Memproses Klasifikasi...'):
+            if st.button('Lakukan Klasifikasi', type="primary"):
+                with st.spinner('Memproses...'):
                     img_resized = img.resize((128, 128))
                     img_array = image.img_to_array(img_resized)
-                    img_array = np.expand_dims(img_array, axis=0)
-                    img_array = img_array / 255.0
-
+                    img_array = np.expand_dims(img_array, axis=0) / 255.0
                     prediction = classifier.predict(img_array)
                     class_index = np.argmax(prediction)
                     probability = np.max(prediction)
 
                     st.markdown("---")
-                    
-                    if class_index < len(CLASS_NAMES):
-                        predicted_class = CLASS_NAMES[class_index]
-                        
-                        if predicted_class == 'Kebakaran Hutan':
-                            st.error("🔥 **[HASIL KRITIS]** Terdeteksi: Kebakaran Hutan")
-                        else:
-                            st.success("🏡 **[HASIL AMAN]** Terdeteksi: Bukan Kebakaran Hutan")
-
-                        st.markdown(f"### Kelas Prediksi: **{predicted_class}**")
-                        st.write(f"Tingkat Keyakinan: **{probability*100:.2f}%**")
+                    predicted_class = CLASS_NAMES[class_index]
+                    if predicted_class == 'Kebakaran Hutan':
+                        st.error("🔥 **Terdeteksi: Kebakaran Hutan**")
                     else:
-                        st.error("Indeks kelas tidak valid. Pastikan CLASS_NAMES sudah benar.")
+                        st.success("🏡 **Terdeteksi: Bukan Kebakaran Hutan**")
+                    st.write(f"Tingkat Keyakinan: **{probability*100:.2f}%**")
 
     st.markdown("---")
-    st.button("⬅ Kembali ke Home", key="back_from_classify", on_click=go_to, args=("home",))
+    st.button("⬅ Kembali", key="back_classify", on_click=go_to, args=("home",))
 
 # ==========================
-# Halaman DETEKSI OBJEK
+# Halaman DETEKSI
 # ==========================
 elif st.session_state.page == "detect":
     st.header("🎯 Menu Deteksi Objek")
 
-    # =====================================
-# Animasi Bidak Catur Bergerak di Latar
-# =====================================
-st.markdown("""
-<style>
-/* Lapisan khusus untuk animasi */
-.chess-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    z-index: -2;
-    pointer-events: none;
-}
+    # ===== Animasi Bidak Catur =====
+    st.markdown("""
+    <style>
+    .chess-bg {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        overflow: hidden;
+        z-index: -2;
+        pointer-events: none;
+    }
+    .piece {
+        position: absolute;
+        width: 60px;
+        opacity: 0.35;
+        animation: floatPiece 3s ease-in-out infinite alternate, moveAcross linear infinite;
+        filter: drop-shadow(0 0 5px rgba(255,255,255,0.3));
+    }
+    @keyframes floatPiece {
+        from { transform: translateY(0px) rotate(0deg); }
+        to { transform: translateY(-20px) rotate(10deg); }
+    }
+    @keyframes moveAcross {
+        from { left: -10%; }
+        to { left: 110%; }
+    }
+    </style>
 
-/* Bidak catur melayang */
-.piece {
-    position: absolute;
-    width: 60px;
-    opacity: 0.35;
-    animation: floatPiece linear infinite;
-    filter: drop-shadow(0 0 5px rgba(255,255,255,0.3));
-}
-
-/* Animasi pergerakan lembut bidak */
-@keyframes floatPiece {
-    0% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-25px) rotate(10deg); }
-    100% { transform: translateY(0px) rotate(0deg); }
-}
-
-/* Gerakan horizontal bergantian */
-@keyframes moveAcross {
-    0% { left: -10%; }
-    100% { left: 110%; }
-}
-</style>
-
-<!-- Tambahkan 6 bidak catur melayang -->
-<div class="chess-bg">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Chess_Piece_-_King_White.svg" class="piece" style="top: 10%; animation-duration: 25s; animation-name: moveAcross, floatPiece; animation-iteration-count: infinite, infinite; animation-timing-function: linear, ease-in-out;">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_Piece_-_Queen_Black.svg" class="piece" style="top: 30%; animation-duration: 30s; animation-name: moveAcross, floatPiece; animation-delay: 5s;">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/f/f1/Chess_Piece_-_Rook_White.svg" class="piece" style="top: 50%; animation-duration: 28s; animation-name: moveAcross, floatPiece; animation-delay: 8s;">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/2/28/Chess_Piece_-_Bishop_Black.svg" class="piece" style="top: 65%; animation-duration: 22s; animation-name: moveAcross, floatPiece; animation-delay: 2s;">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_Piece_-_Knight_White.svg" class="piece" style="top: 80%; animation-duration: 32s; animation-name: moveAcross, floatPiece; animation-delay: 10s;">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c3/Chess_Piece_-_Pawn_Black.svg" class="piece" style="top: 90%; animation-duration: 26s; animation-name: moveAcross, floatPiece; animation-delay: 12s;">
-</div>
-""", unsafe_allow_html=True)
-
+    <div class="chess-bg">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Chess_Piece_-_King_White.svg" class="piece" style="top: 10%; animation-duration: 25s;">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_Piece_-_Queen_Black.svg" class="piece" style="top: 30%; animation-duration: 28s; animation-delay: 5s;">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/f/f1/Chess_Piece_-_Rook_White.svg" class="piece" style="top: 50%; animation-duration: 30s; animation-delay: 10s;">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/2/28/Chess_Piece_-_Bishop_Black.svg" class="piece" style="top: 65%; animation-duration: 26s; animation-delay: 15s;">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_Piece_-_Knight_White.svg" class="piece" style="top: 80%; animation-duration: 32s; animation-delay: 8s;">
+    </div>
+    """, unsafe_allow_html=True)
 
     if load_err:
         st.error(f"Gagal memuat model: {load_err}")
     elif yolo_model is None:
-        st.warning("Model Deteksi Objek tidak dapat dimuat. Cek jalur file model (.pt) Anda.")
+        st.warning("Model Deteksi tidak dapat dimuat.")
     else:
         uploaded_file = st.file_uploader("Upload gambar untuk deteksi objek", type=["jpg", "jpeg", "png"])
-
         if uploaded_file:
             img = Image.open(uploaded_file).convert("RGB")
             st.image(img, caption="Gambar yang diupload", use_container_width=True)
 
-            if st.button('Lakukan Deteksi', type="primary", use_container_width=True):
-                with st.spinner('Memproses Deteksi Objek...'):
+            if st.button('Lakukan Deteksi', type="primary"):
+                with st.spinner('Memproses Deteksi...'):
                     results = yolo_model(img)
                     result_img = results[0].plot()
 
                     detected_labels = []
-                    if hasattr(results[0], "boxes") and results[0].boxes is not None:
+                    if hasattr(results[0], "boxes"):
                         for box in results[0].boxes:
-                            try:
-                                class_id = int(box.cls[0])
-                            except Exception:
-                                class_id = int(box.cls)
-                            
-                            label = results[0].names.get(class_id, str(class_id)) if hasattr(results[0], "names") else str(class_id)
+                            class_id = int(box.cls[0]) if hasattr(box.cls, "__getitem__") else int(box.cls)
+                            label = results[0].names.get(class_id, str(class_id))
                             detected_labels.append(label)
 
                     st.markdown("---")
                     st.image(result_img, caption="Hasil Deteksi", use_container_width=True)
-                    st.success("✅ Deteksi Selesai!")
-
                     if detected_labels:
                         unique_labels = list(dict.fromkeys(detected_labels))
-                        label_text = ", ".join(unique_labels)
-                        total = len(detected_labels)
-                        st.markdown(f"### 🧩 Objek Terdeteksi: **{label_text}**")
-                        st.write(f"Jumlah total kotak objek terdeteksi: **{total}**")
+                        st.success(f"🧩 Objek Terdeteksi: {', '.join(unique_labels)}")
                     else:
                         st.warning("Tidak ada objek yang terdeteksi.")
-                        
+
     st.markdown("---")
-    st.button("⬅ Kembali ke Home", key="back_from_detect", on_click=go_to, args=("home",))
+    st.button("⬅ Kembali", key="back_detect", on_click=go_to, args=("home",))
