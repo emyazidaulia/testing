@@ -1,7 +1,6 @@
 import streamlit as st
-from streamlit_lottie import st_lottie
-import requests 
-# ... (impor lainnya)
+# from streamlit_lottie import st_lottie # DIHAPUS
+# import requests # DIHAPUS (karena hanya untuk Lottie)
 from ultralytics import YOLO
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image
@@ -20,26 +19,12 @@ IMG_URLS_HOME = [
     "https://i.imgur.com/VwBdFtX.jpeg"
 ]
 TOTAL_DURATION = 20
-IMAGE_COUNT = 5 
-# URL Lottie (Animasi Api/Kebakaran)
-LOTTIE_FIRE_URL = "https://lottie.host/86581997-293e-48ac-b09e-73c3397984f4/T012Yk7w0y.json" 
+IMAGE_COUNT_DETECT = 5 # Jumlah gambar kecil yang akan bergerak di Deteksi
+EMOJI_COUNT_CLASSIFY = 10 # Jumlah emoji yang akan bergerak di Klasifikasi
+EMOJI = "🔥"
 
 # =======================================================
-# Fungsi Bantuan untuk Lottie
-# =======================================================
-@st.cache_data
-def load_lottieurl(url: str):
-    try:
-        r = requests.get(url, timeout=10) 
-        if r.status_code == 200:
-            return r.json()
-        return None
-    except requests.exceptions.RequestException:
-        return None
-
-
-# =======================================================
-# 1. FUNGSI STYLE CSS GLOBAL (Tidak Berubah)
+# 1. FUNGSI STYLE CSS GLOBAL (Diperbarui untuk Animasi Emoji)
 # =======================================================
 def set_global_styles():
     css_global = f"""
@@ -80,8 +65,8 @@ def set_global_styles():
         100% {{ background-image: url('{IMG_URLS_HOME[0]}'); opacity: 0.5; }}
     }}
 
-    /* KEYFRAMES PERGERAKAN HORIZONTAL (Kiri ke Kanan) */
-    @keyframes move-and-fade {{ 
+    /* KEYFRAMES PERGERAKAN HORIZONTAL UNTUK GAMBAR (Deteksi) */
+    @keyframes move-and-fade-detect {{ 
         0% {{ 
             transform: translateX(-100%) scale(1); 
             opacity: 0.2;
@@ -89,6 +74,21 @@ def set_global_styles():
         100% {{ 
             transform: translateX(100vw) scale(1.1); 
             opacity: 0.4; 
+        }} 
+    }}
+
+    /* 🚨 BARU: KEYFRAMES UNTUK EMOJI API (Klasifikasi) */
+    @keyframes move-and-spin-emoji {{ 
+        0% {{ 
+            transform: translate(0, 100vh) rotate(0deg); 
+            opacity: 0;
+        }} 
+        50% {{
+            opacity: 0.6;
+        }}
+        100% {{ 
+            transform: translate(100vw, -20vh) rotate(720deg); 
+            opacity: 0; 
         }} 
     }}
 
@@ -112,18 +112,39 @@ def set_global_styles():
         z-index: -2; 
         pointer-events: none;
         overflow: hidden; 
-        /* Pastikan tidak ada karakter yang dirender */
         line-height: 0; 
         font-size: 0;
     }}
     
-    /* Style untuk Setiap Gambar */
+    /* Style untuk Setiap Gambar Deteksi */
     .detect-img-layer img {{
         width: 100px; 
         position: absolute;
         opacity: 0.25; 
-        animation: move-and-fade 25s linear infinite; 
+        animation: move-and-fade-detect 25s linear infinite; 
         filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
+    }}
+
+    /* 🚨 BARU: Style untuk Layer Emoji Api (Klasifikasi) */
+    .fire-emoji-layer {{
+        position: fixed; 
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        z-index: -2; 
+        pointer-events: none;
+        overflow: hidden; 
+        font-size: 0; /* Penting untuk mencegah rendering teks */
+    }}
+    
+    /* 🚨 BARU: Style untuk Setiap Emoji */
+    .fire-emoji-layer span {{
+        position: absolute;
+        font-size: 50px; /* Ukuran emoji */
+        opacity: 0; /* Dimulai tersembunyi */
+        animation: move-and-spin-emoji 20s infinite ease-in-out; /* Animasi Vertikal & Rotasi */
+        display: block;
+        line-height: 1;
+        text-shadow: 0 0 5px rgba(255, 100, 0, 0.8);
     }}
     
     </style>
@@ -144,23 +165,37 @@ def render_background_layer(page):
     if page == "home":
         st.markdown(f'<div class="home-bg-layer"></div>', unsafe_allow_html=True)
         
+    elif page == "classify":
+        # 🚨 BARU: GENERATE MULTIPLE MOVING EMOJI (Klasifikasi)
+        emojis_html = ""
+        import random
+        for i in range(EMOJI_COUNT_CLASSIFY):
+            # Posisi horizontal acak
+            left_percent = random.randint(0, 100) 
+            # Durasi dan delay acak untuk variasi
+            duration = random.uniform(15, 30) 
+            delay = random.uniform(0, 15) 
+            
+            # 🚨 Penting: Gunakan <span> untuk emoji dan pastikan string minimal
+            emojis_html += f'<span style="left: {left_percent}%; animation-duration: {duration:.2f}s; animation-delay: {delay:.2f}s;">{EMOJI}</span>'
+        
+        html_markup = f'<div class="fire-emoji-layer">{emojis_html}</div>'
+        st.markdown(html_markup, unsafe_allow_html=True)
+        
     elif page == "detect":
         # --- GENERATE MULTIPLE MOVING IMAGES ---
         images_html = ""
-        for i in range(IMAGE_COUNT):
+        for i in range(IMAGE_COUNT_DETECT):
             top_percent = 10 + (i * 15) 
             duration = 25 + (i * 2) 
             delay = i * 5 
             
-            # 🚨 PERBAIKAN: Memastikan string HTML dibuat tanpa newline/spasi ekstra
+            # Pastikan string HTML dibuat tanpa newline/spasi ekstra
             images_html += f'<img src="{PNG_URL_DETECT}" alt="Moving Object {i+1}" style="top: {top_percent}%; animation-duration: {duration}s; animation-delay: {delay}s;">'
         
         # Injeksi gambar bergerak (detect-img-layer z-index: -2)
-        # 🚨 PERBAIKAN: Menggunakan format string minimal
         html_markup = f'<div class="detect-img-layer">{images_html}</div>'
         st.markdown(html_markup, unsafe_allow_html=True)
-        
-    # Halaman Klasifikasi tidak memiliki background fixed.
 
 
 # ==========================
@@ -169,6 +204,7 @@ def render_background_layer(page):
 @st.cache_resource
 def load_models():
     try:
+        # PENTING: Ganti path model Anda di sini
         yolo_model = YOLO("model/Muhammad Yazid Aulia_Laporan 4.pt")
         classifier = tf.keras.models.load_model("model/Muhammad Yazid Aulia_Laporan 2.h5")
         return yolo_model, classifier
@@ -224,7 +260,7 @@ with st.sidebar:
 render_background_layer(st.session_state.page)
 
 # ==========================
-# Halaman HOME (dengan background animasi gambar)
+# Halaman HOME
 # ==========================
 if st.session_state.page == "home":
     st.markdown("<h1 style='text-align:center; color:#FFFFFF; text-shadow: 2px 2px 4px #000000;'>🔥 Aplikasi Analisis Kebakaran Hutan</h1>", unsafe_allow_html=True)
@@ -251,28 +287,13 @@ if st.session_state.page == "home":
 
 
 # ==========================
-# Halaman KLASIFIKASI (dengan Lottie di dalam konten)
+# Halaman KLASIFIKASI (dengan background emoji api beterbangan)
 # ==========================
 elif st.session_state.page == "classify":
     st.header("🖼 Menu Klasifikasi Gambar")
     
-    # Tampilkan Lottie di tengah atas halaman
-    lottie_json = load_lottieurl(LOTTIE_FIRE_URL)
-    if lottie_json:
-        col_lottie_1, col_lottie_main, col_lottie_2 = st.columns([1, 2, 1])
-        with col_lottie_main:
-            st_lottie(
-                lottie_json,
-                speed=1,
-                reverse=False,
-                loop=True,
-                quality="medium", 
-                height=250, 
-                key="fire_animation_unique",
-            )
-    # 🚨 PERBAIKAN: Menghapus st.warning jika Lottie gagal dimuat agar dashboard bersih.
-    
-    st.markdown("---")
+    # Tidak ada lagi Lottie di sini
+    st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True) # Tambahkan spasi di atas konten
 
     # ... (sisa konten klasifikasi)
     if load_err:
