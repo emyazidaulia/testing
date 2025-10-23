@@ -20,7 +20,7 @@ TOTAL_DURATION = 20
 IMAGE_COUNT = 5 # Jumlah gambar kecil yang akan bergerak
 
 # =======================================================
-# 1. FUNGSI STYLE CSS GLOBAL (Diperbarui untuk Multiple Objects)
+# 1. FUNGSI STYLE CSS GLOBAL (Diperbarui untuk Menyembunyikan Markup HTML)
 # =======================================================
 def set_global_styles():
     css_global = f"""
@@ -87,22 +87,25 @@ def set_global_styles():
         animation: image-swap {TOTAL_DURATION}s infinite;
     }}
     
-    /* Style untuk Container Gambar Deteksi */
+    /* 🚨 PERBAIKAN DI SINI: Style untuk Container Gambar Deteksi */
     .detect-img-layer {{
-        position: fixed;
+        position: fixed; /* Penting agar tidak menjadi bagian dari alur konten */
         top: 0; left: 0;
         width: 100%; height: 100%;
         z-index: -2; 
         pointer-events: none;
-        overflow: hidden; /* Penting agar gambar yang keluar dari layar tidak menyebabkan scrollbar */
+        overflow: hidden; 
+        /* Menyembunyikan potensi teks/spasi yang tidak ter-parse */
+        line-height: 0;
+        font-size: 0;
     }}
     
     /* Style untuk Setiap Gambar */
     .detect-img-layer img {{
-        width: 100px; /* Ukuran yang lebih kecil untuk banyak objek */
+        width: 100px; 
         position: absolute;
         opacity: 0.25; 
-        animation: move-and-fade 25s linear infinite; /* Durasi lebih lama, animasi linear */
+        animation: move-and-fade 25s linear infinite; 
         filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
     }}
 
@@ -125,30 +128,28 @@ def render_background_layer(page):
         images_html = ""
         # Loop untuk membuat 5 gambar dengan posisi Y (atas/bawah) dan delay yang berbeda
         for i in range(IMAGE_COUNT):
-            # Posisi vertikal acak (disederhanakan untuk penempatan yang jelas)
-            top_percent = 10 + (i * 15) % 80 
+            # Posisi vertikal yang tersebar
+            top_percent = 10 + (i * 15) 
             # Durasi animasi yang sedikit berbeda
             duration = 25 + (i * 2) 
             # Delay untuk memastikan tidak bergerak bersamaan
             delay = i * 5 
             
-            images_html += f"""
-            <img 
+            # Perhatikan: Tidak ada spasi atau baris baru antara tag HTML di sini
+            images_html += f"""<img 
                 src="{PNG_URL_DETECT}" 
                 alt="Moving Object {i+1}" 
                 style="
                     top: {top_percent}%; 
                     animation-duration: {duration}s;
                     animation-delay: {delay}s;
-                "
-            >
-            """
+                ">"""
         
-        st.markdown(f"""
-        <div class="detect-img-layer">
-            {images_html}
-        </div>
-        """, unsafe_allow_html=True)
+        # 🚨 PERBAIKAN DI SINI: Pastikan tidak ada spasi di sekitar {images_html}
+        # dan gunakan satu string minimal untuk mengurangi risiko Streamlit menampilkan markup.
+        html_markup = f"""<div class="detect-img-layer">{images_html}</div>"""
+        st.markdown(html_markup, unsafe_allow_html=True)
+        
         # Tambahkan layer gelap tambahan agar konten lebih jelas
         st.markdown('<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.2); z-index: -3;"></div>', unsafe_allow_html=True)
 
@@ -156,6 +157,7 @@ def render_background_layer(page):
 # ==========================
 # Load Models (basecode)
 # ==========================
+# ... (Kode loading model tidak berubah)
 @st.cache_resource
 def load_models():
     try:
