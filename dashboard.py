@@ -27,14 +27,17 @@ LOTTIE_FIRE_URL = "https://lottie.host/86581997-293e-48ac-b09e-73c3397984f4/T012
 # =======================================================
 @st.cache_data
 def load_lottieurl(url: str):
-    r = requests.get(url)
-    if r.status_code != 200:
+    try:
+        r = requests.get(url, timeout=10) # Tambahkan timeout
+        if r.status_code == 200:
+            return r.json()
         return None
-    return r.json()
+    except requests.exceptions.RequestException:
+        return None
 
 
 # =======================================================
-# 1. FUNGSI STYLE CSS GLOBAL (Dibersihkan dari Lottie CSS)
+# 1. FUNGSI STYLE CSS GLOBAL (Tidak Berubah)
 # =======================================================
 def set_global_styles():
     css_global = f"""
@@ -104,7 +107,7 @@ def set_global_styles():
         position: fixed; 
         top: 0; left: 0;
         width: 100%; height: 100%;
-        z-index: -2; /* Di depan layer gelap global (-3) */
+        z-index: -2; 
         pointer-events: none;
         overflow: hidden; 
         line-height: 0;
@@ -159,7 +162,7 @@ def render_background_layer(page):
         html_markup = f"""<div class="detect-img-layer">{images_html}</div>"""
         st.markdown(html_markup, unsafe_allow_html=True)
         
-    # Halaman Klasifikasi tidak memiliki background fixed, Lottie akan ditampilkan di dalam konten utama.
+    # Halaman Klasifikasi tidak memiliki background fixed, Lottie ada di konten utama.
 
 
 # ==========================
@@ -258,6 +261,7 @@ elif st.session_state.page == "classify":
     # 🚨 PERBAIKAN DI SINI: Tampilkan Lottie di atas, menggunakan st.columns
     lottie_json = load_lottieurl(LOTTIE_FIRE_URL)
     if lottie_json:
+        # Posisikan Lottie di tengah atas halaman
         col_lottie_1, col_lottie_main, col_lottie_2 = st.columns([1, 2, 1])
         with col_lottie_main:
             st_lottie(
@@ -265,11 +269,15 @@ elif st.session_state.page == "classify":
                 speed=1,
                 reverse=False,
                 loop=True,
-                quality="low", 
-                height=200, # Ukuran yang lebih wajar
-                key="fire_animation",
+                quality="medium", 
+                height=250, # Ukuran yang diperbesar sedikit
+                key="fire_animation_unique",
             )
+    else:
+        st.warning("⚠️ Gagal memuat animasi Lottie. Cek URL atau koneksi internet Anda.")
     
+    st.markdown("---")
+
     # ... (sisa konten klasifikasi)
     if load_err:
         st.error(f"Gagal memuat model: {load_err}")
@@ -277,7 +285,7 @@ elif st.session_state.page == "classify":
         st.warning("Model Klasifikasi tidak dapat dimuat. Cek jalur file model (.h5) Anda.")
     else:
         uploaded_file = st.file_uploader("Upload gambar untuk klasifikasi", type=["jpg", "jpeg", "png"])
-        # ... (lanjutan kode klasifikasi tidak berubah)
+        
         if uploaded_file:
             img = Image.open(uploaded_file).convert("RGB")
             st.image(img, caption="Gambar yang diupload", use_container_width=True)
@@ -317,7 +325,7 @@ elif st.session_state.page == "detect":
         st.warning("Model Deteksi Objek tidak dapat dimuat. Cek jalur file model (.pt) Anda.")
     else:
         uploaded_file = st.file_uploader("Upload gambar untuk deteksi objek", type=["jpg", "jpeg", "png"])
-        # ... (lanjutan kode deteksi tidak berubah)
+        
         if uploaded_file:
             img = Image.open(uploaded_file).convert("RGB")
             st.image(img, caption="Gambar yang diupload", use_container_width=True)
