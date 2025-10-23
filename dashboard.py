@@ -10,7 +10,7 @@ import random
 # Konfigurasi Global
 # ==========================
 CLASS_NAMES = ['Kebakaran Hutan', 'Bukan Kebakaran Hutan']
-PNG_URL_DETECT = "https://raw.githubusercontent.com/emyazidaulia/testing/main/sample_images/00000058.png"
+# PNG_URL_DETECT = "https://raw.githubusercontent.com/emyazidaulia/testing/main/sample_images/00000058.png" # 🚨 DIHAPUS
 IMG_URLS_HOME = [
     "https://i.imgur.com/iTMrNAj.jpeg",
     "https://i.imgur.com/FsTtNpE.jpeg",
@@ -18,17 +18,22 @@ IMG_URLS_HOME = [
     "https://i.imgur.com/VwBdFtX.jpeg"
 ]
 TOTAL_DURATION = 20
-IMAGE_COUNT_DETECT = 5 
+# IMAGE_COUNT_DETECT = 5 # Diganti dengan EMOJI_COUNT_DETECT
 EMOJI_COUNT_CLASSIFY = 40 
 EMOJIS_CLASSIFY = ["🔥", "🌲"] 
 
+# 🚨 BARU: Konfigurasi untuk Deteksi Objek
+EMOJI_COUNT_DETECT = 30 # Jumlah emoji catur yang akan bergerak
+EMOJIS_CHESS = ["♜", "♞", "♝", "♛", "♚", "♟"] # Emoji bidak catur
+
+
 # =======================================================
-# 1. FUNGSI STYLE CSS GLOBAL (Diperbarui untuk Pergerakan Acak)
+# 1. FUNGSI STYLE CSS GLOBAL (Diperbarui untuk Animasi Emoji Catur)
 # =======================================================
 def set_global_styles():
     css_global = f"""
     <style>
-    /* ... (Style Home dan Deteksi tidak berubah) ... */
+    /* ... (Style umum tidak berubah) ... */
     
     .main, .stApp {{ background: none !important; }}
     
@@ -63,19 +68,28 @@ def set_global_styles():
         100% {{ background-image: url('{IMG_URLS_HOME[0]}'); opacity: 0.5; }}
     }}
 
-    @keyframes move-and-fade-detect {{ 
+    /* 🚨 LAMA: KEYFRAMES PERGERAKAN HORIZONTAL UNTUK GAMBAR (Deteksi) - Akan diubah */
+    /* 🚨 BARU: KEYFRAMES UNTUK EMOJI CATUR (Deteksi) - Pergerakan Acak */
+    @keyframes move-and-spin-chess-emoji {{ 
         0% {{ 
-            transform: translateX(-100%) scale(1); 
-            opacity: 0.2;
+            transform: translate(0, 0) rotate(0deg) scale(0.6); 
+            opacity: 0;
         }} 
+        30% {{
+            transform: translate(-20vw, 30vh) rotate(180deg) scale(0.9);
+            opacity: 0.7; 
+        }}
+        70% {{
+            transform: translate(60vw, -40vh) rotate(540deg) scale(1.2);
+            opacity: 0.7;
+        }}
         100% {{ 
-            transform: translateX(100vw) scale(1.1); 
-            opacity: 0.4; 
+            transform: translate(120vw, 80vh) rotate(720deg) scale(0.6); 
+            opacity: 0; 
         }} 
     }}
 
-    /* 🚨 PERBAIKAN: KEYFRAMES UNTUK PERGERAKAN ACAK/MELINGKAR */
-    /* Setiap emoji akan bergerak dari posisi awal yang berbeda ke posisi acak */
+    /* KEYFRAMES UNTUK EMOJI API (Klasifikasi) */
     @keyframes move-and-spin-emoji {{ 
         0% {{ 
             transform: translate(0, 0) rotate(0deg) scale(0.5); 
@@ -107,25 +121,27 @@ def set_global_styles():
         animation: image-swap {TOTAL_DURATION}s infinite;
     }}
     
-    /* Style untuk Container Gambar Deteksi */
-    .detect-img-layer {{
+    /* 🚨 DIHAPUS: Style untuk Container Gambar Deteksi */
+    /* 🚨 BARU: Style untuk Layer Emoji Catur (Deteksi) */
+    .chess-emoji-layer {{
         position: fixed; 
         top: 0; left: 0;
         width: 100%; height: 100%;
         z-index: -2; 
         pointer-events: none;
         overflow: hidden; 
-        line-height: 0; 
-        font-size: 0;
+        font-size: 0; 
     }}
     
-    /* Style untuk Setiap Gambar Deteksi */
-    .detect-img-layer img {{
-        width: 100px; 
+    /* 🚨 BARU: Style untuk Setiap Emoji Catur */
+    .chess-emoji-layer span {{
         position: absolute;
-        opacity: 0.25; 
-        animation: move-and-fade-detect 25s linear infinite; 
-        filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
+        font-size: 60px; /* Ukuran emoji catur */
+        opacity: 0; 
+        animation: move-and-spin-chess-emoji 20s infinite ease-in-out; /* Durasi animasi catur */
+        display: block;
+        line-height: 1;
+        filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.7)); /* Bayangan lebih kuat untuk catur */
     }}
 
     /* Style untuk Layer Emoji Api (Klasifikasi) */
@@ -139,7 +155,7 @@ def set_global_styles():
         font-size: 0; 
     }}
     
-    /* Style untuk Setiap Emoji */
+    /* Style untuk Setiap Emoji Api */
     .fire-emoji-layer span {{
         position: absolute;
         font-size: 50px; 
@@ -173,32 +189,34 @@ def render_background_layer(page):
         emojis_html = ""
         
         for i in range(EMOJI_COUNT_CLASSIFY):
-            # 🚨 PERBAIKAN: Posisi awal acak di seluruh layar
-            left_percent = random.randint(-20, 100) # Mulai dari kiri luar sampai kanan
-            top_percent = random.randint(0, 100) # Mulai dari atas sampai bawah
+            left_percent = random.randint(-20, 100) 
+            top_percent = random.randint(0, 100) 
             
             duration = random.uniform(8, 12) 
             delay = random.uniform(0, 8) 
             
             selected_emoji = random.choice(EMOJIS_CLASSIFY)
             
-            # Gunakan 'left' dan 'top' untuk menentukan posisi awal
             emojis_html += f'<span style="left: {left_percent}%; top: {top_percent}%; animation-duration: {duration:.2f}s; animation-delay: {delay:.2f}s;">{selected_emoji}</span>'
         
         html_markup = f'<div class="fire-emoji-layer">{emojis_html}</div>'
         st.markdown(html_markup, unsafe_allow_html=True)
         
     elif page == "detect":
-        # --- GENERATE MULTIPLE MOVING IMAGES ---
-        images_html = ""
-        for i in range(IMAGE_COUNT_DETECT):
-            top_percent = 10 + (i * 15) 
-            duration = 25 + (i * 2) 
-            delay = i * 5 
+        # 🚨 BARU: GENERATE MULTIPLE MOVING CHESS EMOJI (Deteksi)
+        chess_emojis_html = ""
+        for i in range(EMOJI_COUNT_DETECT):
+            left_percent = random.randint(-20, 100) # Mulai dari kiri luar sampai kanan
+            top_percent = random.randint(0, 100) # Mulai dari atas sampai bawah
             
-            images_html += f'<img src="{PNG_URL_DETECT}" alt="Moving Object {i+1}" style="top: {top_percent}%; animation-duration: {duration}s; animation-delay: {delay}s;">'
+            duration = random.uniform(15, 25) # Durasi animasi catur sedikit lebih lambat
+            delay = random.uniform(0, 10) # Delay acak
+            
+            selected_chess_emoji = random.choice(EMOJIS_CHESS)
+            
+            chess_emojis_html += f'<span style="left: {left_percent}%; top: {top_percent}%; animation-duration: {duration:.2f}s; animation-delay: {delay:.2f}s;">{selected_chess_emoji}</span>'
         
-        html_markup = f'<div class="detect-img-layer">{images_html}</div>'
+        html_markup = f'<div class="chess-emoji-layer">{chess_emojis_html}</div>'
         st.markdown(html_markup, unsafe_allow_html=True)
 
 
@@ -290,7 +308,7 @@ if st.session_state.page == "home":
 
 
 # ==========================
-# Halaman KLASIFIKASI (dengan background emoji api beterbangan)
+# Halaman KLASIFIKASI (dengan background emoji api & pohon beterbangan)
 # ==========================
 elif st.session_state.page == "classify":
     st.header("🖼 Menu Klasifikasi Gambar")
@@ -332,11 +350,13 @@ elif st.session_state.page == "classify":
 
 
 # ==========================
-# Halaman DETEKSI (background gambar PNG bergerak)
+# Halaman DETEKSI (dengan background emoji catur beterbangan)
 # ==========================
 elif st.session_state.page == "detect":
     st.header("🎯 Menu Deteksi Objek")
     
+    st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True) # Tambahkan spasi di atas konten
+
     # ... (sisa konten deteksi)
     if load_err:
         st.error(f"Gagal memuat model: {load_err}")
